@@ -1,6 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:icons_management_system/data/file_manager.dart';
 
-void main() {
+void main() async {
+  await Filehandler.writeFile({
+    "data": [
+      {
+        "Name": "Alexander Szura",
+        "StudentID" : 20510329,
+        "Item Taken": "SAUDER"
+      }
+    ]
+  });
+
   runApp(const MyApp());
 }
 
@@ -53,8 +64,15 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   int _counter = 0;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+     if (state == AppLifecycleState.paused) {
+         // TODO: Save
+     }
+}
 
   void _incrementCounter() {
     setState(() {
@@ -118,5 +136,11 @@ class _MyHomePageState extends State<MyHomePage> {
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 }
