@@ -11,7 +11,7 @@ class Item {
   Item({required File imagePath}) : image = imagePath, name = withoutExtension(basename(imagePath.path));
 
   String getName() => name;
-  Widget buildImage() => Image.file(image);
+  Widget buildImage(double width, double height) => Image.file(image, fit: BoxFit.contain);
 
   Item copy() => Item(imagePath: image);
 

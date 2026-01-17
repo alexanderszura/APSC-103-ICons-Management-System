@@ -43,6 +43,13 @@ class _MainScreenState extends State<MainScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController studentIdController = TextEditingController();
 
+  final itemOptions = FileHandler.loadItems();
+
+  final double imageWidth = 400;
+  final double imageHeight = 400;
+
+  Item? selectedItem;
+
   Future<void> updateSessionFile() async {
     if (!await FileHandler.writeFile(InvetoryManager.toJSON())) {
       print("Unable to save session data...");
@@ -106,9 +113,13 @@ class _MainScreenState extends State<MainScreen> {
               ),
 
               Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // Left side - Form
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                     const Text(
                       'ICon Database',
                       style: TextStyle(
@@ -155,39 +166,101 @@ class _MainScreenState extends State<MainScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 30),
 
-                    OutlinedButton(
-                      onPressed: () async {
-                        final name = nameController.text.trim();
-                        final studentNumber = studentIdController.text.trim();
-
-                        if (name.isEmpty || studentNumber.isEmpty) {
-                          return;
-                        }
-
-                        final user = await User.create(name, studentNumber);
-
-                        Item item = (await FileHandler.loadItems())[0];
-
-                        final EntryError? result = InvetoryManager.addEntry(user, item);
-
-                        if (result == null) {
-                          await updateSessionFile();
-                        }
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.white),
-                        shape: const StadiumBorder(),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 48,
-                          vertical: 14,
+                    Container(
+                      width: 260,
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Color(0xFF2A2A2A),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white54),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black45,
+                            blurRadius: 4,
+                            offset: Offset(2, 2),
+                          ),
+                        ],
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<Item>(
+                          value: selectedItem,
+                          hint: Text(
+                            'Select Item',
+                            style: TextStyle(color: Colors.white54),
+                          ),
+                          dropdownColor: Color(0xFF2A2A2A),
+                          iconEnabledColor: Colors.white,
+                          isExpanded: true,
+                          onChanged: (value) {
+                            setState(() {
+                              selectedItem = value;
+                            });
+                          },
+                          items: itemOptions.map((item) {
+                            return DropdownMenuItem(
+                              value: item,
+                              child: Text(
+                                item.name,
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            );
+                          }).toList(),
                         ),
                       ),
-                      child: const Text(
-                        'Submit',
-                        style:
-                            TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+
+                    const SizedBox(height: 40),
+
+                        OutlinedButton(
+                          onPressed: () async {
+                            final name = nameController.text.trim();
+                            final studentNumber = studentIdController.text.trim();
+
+                            if (name.isEmpty || studentNumber.isEmpty) {
+                              return;
+                            }
+
+                            final user = User.create(name, studentNumber);
+
+                            Item item = FileHandler.loadItems()[0];
+
+                            final EntryError? result = InvetoryManager.addEntry(user, item);
+
+                            if (result == null) {
+                              await updateSessionFile();
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.white),
+                            shape: const StadiumBorder(),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 48,
+                              vertical: 14,
+                            ),
+                          ),
+                          child: const Text(
+                            'Submit',
+                            style:
+                                TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(width: 80),
+                    
+                    Container(
+                      width: imageWidth,
+                      height: imageHeight,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: selectedItem == null ? SizedBox() : selectedItem!.buildImage(imageWidth, imageHeight),
                       ),
                     ),
                   ],
