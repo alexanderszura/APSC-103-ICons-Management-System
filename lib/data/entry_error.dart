@@ -2,26 +2,32 @@ import 'package:icons_management_system/data/invetory_manager.dart';
 import 'package:icons_management_system/data/user.dart';
 
 class EntryError {
-  String error;
+  String message;
 
-  EntryError(this.error);
+  EntryError(this.message);
 
-  String getError() => error;
+  String getMessage() => message;
 
   static EntryError userBanned(User user) => EntryError("${user.name} Is Banned");
-  static EntryError itemOut(User user) => EntryError("This User has ${InvetoryManager.getUserItem(user)?.name} currently out");
+  static EntryError itemOut(User user) {
+    var itemNames = InvetoryManager.getUserItems(user);
+    
+    var message = itemNames.isEmpty
+        ? "This user has nothing currently out"
+        : "This User has ${itemNames.map((i) => i.name).join(', ')} currently out";
+        
+    return EntryError(message);
+  }
 
   @override
-  String toString() {
-    return error;
-  }
+  String toString() => getMessage();
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is EntryError && other.error == error;
+    return other is EntryError && other.message == message;
   }
 
   @override
-  int get hashCode => error.hashCode;
+  int get hashCode => message.hashCode;
 }

@@ -56,11 +56,142 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  (User?, EntryError?) submitPressed() {
+    final name = nameController.text.trim();
+    final studentNumber = studentIdController.text.trim();
+
+    if (name.isEmpty || studentNumber.isEmpty) {
+      _showErrorDialog(
+        context,
+        'Missing Information',
+        'Please enter both name and student ID.',
+      );
+      return (null, null);
+    }
+
+    if (selectedItem == null) {
+      _showErrorDialog(
+        context,
+        'No Item Selected',
+        'Please select an item from the dropdown.',
+      );
+      return (null, null);
+    }
+
+    final user = User.create(name, studentNumber);
+
+    return (user, InvetoryManager.addEntry(user, selectedItem!));
+  }
+
   @override
   void dispose() {
     nameController.dispose();
     studentIdController.dispose();
+    
     super.dispose();
+  }
+
+  void _showErrorDialog(BuildContext context, String title, String message, {User? user, bool allowForce = false}) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF2A2A2A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: Colors.redAccent, width: 2),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.redAccent, size: 28),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: const TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+          content: Text(
+            message,
+            style: const TextStyle(color: Colors.white70, fontSize: 16),
+          ),
+          actions: [
+            if (allowForce && user != null && selectedItem != null)
+              TextButton(
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  
+                  InvetoryManager.addEntry(user, selectedItem!, force: true);
+                  
+                  _showSuccessDialog(
+                    context,
+                    'Success!',
+                    'Entry added successfully for ${user.name} (forced).',
+                  );
+
+                  await updateSessionFile();
+                  
+                  // Clear the form
+                  nameController.clear();
+                  studentIdController.clear();
+                  setState(() {
+                    selectedItem = null;
+                  });
+                }, 
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.orangeAccent,
+                ),
+                child: const Text('ALLOW', style: TextStyle(fontSize: 16))
+              ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.redAccent,
+              ),
+              child: const Text('OK', style: TextStyle(fontSize: 16)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSuccessDialog(BuildContext context, String title, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF2A2A2A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: Colors.greenAccent, width: 2),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.check_circle_outline, color: Colors.greenAccent, size: 28),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: const TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+          content: Text(
+            message,
+            style: const TextStyle(color: Colors.white70, fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.greenAccent,
+              ),
+              child: const Text('OK', style: TextStyle(fontSize: 16)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -212,24 +343,37 @@ class _MainScreenState extends State<MainScreen> {
                     ),
 
                     const SizedBox(height: 40),
-
                         OutlinedButton(
                           onPressed: () async {
-                            final name = nameController.text.trim();
-                            final studentNumber = studentIdController.text.trim();
+                            var (user, result) = submitPressed();
 
-                            if (name.isEmpty || studentNumber.isEmpty) {
+                            if (user == null) {
                               return;
                             }
 
-                            final user = User.create(name, studentNumber);
-
-                            Item item = FileHandler.loadItems()[0];
-
-                            final EntryError? result = InvetoryManager.addEntry(user, item);
-
                             if (result == null) {
+                              _showSuccessDialog(
+                                context,
+                                'Success!',
+                                'Entry added successfully for ${user.name}.',
+                              );
+
+                              nameController.clear();
+                              studentIdController.clear();
+
                               await updateSessionFile();
+                              
+                              setState(() {
+                                selectedItem = null;
+                              });
+                            } else {
+                              _showErrorDialog(
+                                context,
+                                'Error',
+                                result.message,
+                                user: user,
+                                allowForce: true,
+                              );
                             }
                           },
                           style: OutlinedButton.styleFrom(
