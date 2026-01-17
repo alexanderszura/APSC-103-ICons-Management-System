@@ -7,7 +7,7 @@ class Item {
   File image;
   DateTime? time;
   
-  Item({required File imagePath}) : image = imagePath, name = basename(imagePath.path);
+  Item({required File imagePath}) : image = imagePath, name = withoutExtension(basename(imagePath.path));
 
   String getName() => name;
   Widget buildImage() => Image.file(image);

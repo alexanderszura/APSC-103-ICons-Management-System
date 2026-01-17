@@ -24,4 +24,17 @@ abstract class InvetoryManager {
   }
 
   static Item? getUserItem(User user) => inventory[user];
+
+  static HashMap<String, dynamic> toJSON() {
+    final map = HashMap<String, List>();
+
+    map['items_out'] = [];
+
+    inventory.forEach((user, item) {
+      Map value = {"name" : user.name, "item" : item.name};
+      map['items_out']?.add({user.studentNumber.toString() : value});
+    });
+
+    return map;
+  }
 }

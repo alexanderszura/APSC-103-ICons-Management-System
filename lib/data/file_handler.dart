@@ -4,13 +4,15 @@ import 'dart:io';
 import 'package:icons_management_system/data/item.dart';
 import 'package:path_provider/path_provider.dart';
 
-abstract class Filehandler {
+abstract class FileHandler {
 
   static Future<String> getDirectory() async {
+    final folderName = "ICons";
+
     final directory = await getApplicationDocumentsDirectory();
     final path = directory.path;
 
-    return path;
+    return "$path/$folderName";
   }
 
   static Future<File> _loadBanFile() async {
@@ -52,24 +54,27 @@ abstract class Filehandler {
   }
 
   static Future<File> _loadSessionFile() async {
-    final folderName = "ICons";
     final fileName = "session.icn";
 
     final path = await getDirectory();
 
-    return File('$path/$folderName/$fileName');
+    return File('$path/$fileName');
   }
 
-  static Future<Map<String, dynamic>?> getFileContents() async {
+  static Future<Map<String, dynamic>> getFileContents() async {
     final file = await _loadSessionFile();
 
     bool exists = await file.exists();
 
     if (!exists) {
-      return null;
+      return {};
     }
 
-    return json.decode(await file.readAsString());
+    try {
+      return json.decode(await file.readAsString());
+    } catch (e) {
+      return {};
+    }
   }
 
   static Future<bool> writeFile(Map<String, dynamic> data) async {
