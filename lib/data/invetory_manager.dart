@@ -29,6 +29,9 @@ abstract class InvetoryManager {
 
   static List<Item> getUserItems(User user) => inventory[user] ?? [];
 
+  static void removeItemFromUser(User user, Item item) => inventory[user]?.remove(item);
+  static void removeUser(User user) => inventory.remove(user);
+
   static HashMap<String, dynamic> toJSON() {
     final map = HashMap<String, List>();
 

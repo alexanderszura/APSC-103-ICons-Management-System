@@ -54,14 +54,11 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
     );
   }
 
-  /// Navigate to home screen
   void _navigateToHome(BuildContext context) {
     Navigator.pop(context); // Close drawer
-    // Pop all routes until we're at the home screen
     Navigator.popUntil(context, (route) => route.isFirst);
   }
 
-  /// Build the menu button that opens the drawer
   Widget _buildMenuButton(BuildContext context) {
     return Positioned(
       top: 16,
@@ -79,7 +76,6 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
     );
   }
 
-  /// Show an error dialog with customizable options
   void showErrorDialog(
     BuildContext context,
     String title,
@@ -135,7 +131,6 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
     );
   }
 
-  /// Show a success dialog
   void showSuccessDialog(BuildContext context, String title, String message) {
     showDialog(
       context: context,
