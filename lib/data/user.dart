@@ -24,9 +24,9 @@ class User {
 
   bool isBanned() => banned;
 
-  static Future<User> create(String name, String studentNumber) async {
-    bannedIDs ??= await FileHandler.getBannedIDs();
+  static Future<void> loadBans() async => bannedIDs ??= await FileHandler.getBannedIDs();
 
+  static User create(String name, String studentNumber) {
     bool isBanned = bannedIDs!.contains(studentNumber);
 
     return User._(name, studentNumber).withBanStatus(isBanned);

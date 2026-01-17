@@ -2,9 +2,17 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:icons_management_system/data/item.dart';
+import 'package:icons_management_system/data/user.dart';
 import 'package:path_provider/path_provider.dart';
 
 abstract class FileHandler {
+
+  static List<File> itemFiles = [];
+
+  static Future<void> init() async {
+    itemFiles = await _loadImageFiles();
+    await User.loadBans();
+  }
 
   static Future<String> getDirectory() async {
     final folderName = "ICons";
@@ -18,9 +26,9 @@ abstract class FileHandler {
   static Future<File> _loadBanFile() async {
     final fileName = "banned_users.txt";
 
-    final path = await getDirectory();
+    final dir = await getDirectory();
 
-    return File("$path/$fileName").create(recursive: true);
+    return File("$dir/$fileName").create(recursive: true);
   }
 
   static Future<List<String>> getBannedIDs() async {
@@ -42,11 +50,10 @@ abstract class FileHandler {
     return files;
   }
 
-  static Future<List<Item>> loadItems() async {
-    List<File> files = await _loadImageFiles();
-
+  static List<Item> loadItems() {
     List<Item> items = [];
-    for (File file in files) {
+
+    for (File file in itemFiles) {
       items.add(Item(imagePath: file));
     }
 
@@ -56,9 +63,9 @@ abstract class FileHandler {
   static Future<File> _loadSessionFile() async {
     final fileName = "session.icn";
 
-    final path = await getDirectory();
+    final dir = await getDirectory();
 
-    return File('$path/$fileName');
+    return File('$dir/$fileName');
   }
 
   static Future<Map<String, dynamic>> getFileContents() async {

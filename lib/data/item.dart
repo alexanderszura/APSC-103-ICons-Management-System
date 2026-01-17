@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:icons_management_system/data/file_handler.dart';
 import 'package:path/path.dart';
 
 class Item {
@@ -23,6 +24,16 @@ class Item {
 
   DateTime? getTime() => time;
 
+  static Item? fromName(String name) {
+    for (Item item in FileHandler.loadItems()) {
+      if (item.name == name) {
+        return item;
+      }
+    }
+    
+    return null;
+  }
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -31,4 +42,9 @@ class Item {
 
   @override
   int get hashCode => name.hashCode;
+
+  @override
+  String toString() {
+    return name;
+  }
 }

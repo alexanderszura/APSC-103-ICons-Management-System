@@ -31,10 +31,20 @@ abstract class InvetoryManager {
     map['items_out'] = [];
 
     inventory.forEach((user, item) {
-      Map value = {"name" : user.name, "item" : item.name};
-      map['items_out']?.add({user.studentNumber.toString() : value});
+      Map value = {"Student_ID" : user.studentNumber, "name" : user.name, "item" : item.name};
+      map['items_out']?.add(value);
     });
 
     return map;
+  }
+
+  static void loadJSON(Map<String, dynamic> data) async {
+    if (!data.containsKey("items_out")) {
+      return;
+    }
+
+    for (Map<String, dynamic> entry in data['items_out']) {
+      inventory[User.create(entry["name"], entry["Student_ID"])] = Item.fromName(entry["item"])!;
+    }
   }
 }

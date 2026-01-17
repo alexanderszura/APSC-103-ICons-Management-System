@@ -8,6 +8,10 @@ import 'package:icons_management_system/data/user.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await FileHandler.init();
+
+  InvetoryManager.loadJSON(await FileHandler.getFileContents());
+
   runApp(const MyApp());
 }
 
