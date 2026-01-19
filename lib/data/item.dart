@@ -1,31 +1,29 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:icons_management_system/data/file_handler.dart';
-import 'package:path/path.dart';
+import 'package:icons_management_system/data/firebase_handler.dart';
 
 class Item {
   String name;
-  File image;
+  String url;
   DateTime? time;
   
-  Item({required File imagePath}) : image = imagePath, name = withoutExtension(basename(imagePath.path));
+  Item(this.name, this.url);
 
   String getName() => name;
-  Widget buildImage(double width, double height) => Image.file(image, fit: BoxFit.contain);
+  Widget buildImage(double width, double height) => Image.network(url, fit: BoxFit.contain);
 
-  Item copy() => Item(imagePath: image);
-
-  Item withTimeStamp({DateTime? time}) {
+  Item withTimestamp({DateTime? time}) {
     time ??= DateTime.now();
     this.time = time;
 
     return this;
   }
 
-  DateTime? getTime() => time;
+  Item copy() => Item(name, url);
+
+  DateTime? getTimestamp() => time;
 
   static Item? fromName(String name) {
-    for (Item item in FileHandler.loadItems()) {
+    for (Item item in FirebaseHandler.loadItems()) {
       if (item.name == name) {
         return item;
       }

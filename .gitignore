@@ -7,9 +7,8 @@
 .buildlog/
 .history
 
-
-
 # Flutter repo-specific
+/node_modules/
 /bin/cache/
 /bin/internal/bootstrap.bat
 /bin/internal/bootstrap.sh

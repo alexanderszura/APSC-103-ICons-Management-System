@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:icons_management_system/data/invetory_manager.dart';
 import 'package:icons_management_system/data/user.dart';
 import 'package:icons_management_system/data/item.dart';
-import 'package:icons_management_system/data/file_handler.dart';
+import 'package:icons_management_system/data/firebase_handler.dart';
 import 'package:icons_management_system/screens/base_screen.dart';
 
 class SearchScreen extends BaseScreen {
@@ -113,7 +113,7 @@ class SearchScreenState extends BaseScreenState<SearchScreen> {
   }
 
   Future<void> updateSessionFile() async {
-    if (!await FileHandler.writeFile(InvetoryManager.toJSON())) {
+    if (!await FirebaseHandler.sync(InvetoryManager.toJSON())) {
       print("Unable to save session data...");
     }
   }

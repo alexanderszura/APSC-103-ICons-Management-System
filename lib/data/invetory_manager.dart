@@ -22,7 +22,7 @@ abstract class InvetoryManager {
       inventory[user] = [];
     }
 
-    inventory[user]?.add(item.copy().withTimeStamp());
+    inventory[user]?.add(item.copy().withTimestamp());
 
     return null;
   }

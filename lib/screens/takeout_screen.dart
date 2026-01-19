@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:icons_management_system/data/entry_error.dart';
-import 'package:icons_management_system/data/file_handler.dart';
+import 'package:icons_management_system/data/firebase_handler.dart';
 import 'package:icons_management_system/data/invetory_manager.dart';
 import 'package:icons_management_system/data/item.dart';
 import 'package:icons_management_system/data/user.dart';
@@ -17,7 +17,7 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController studentIdController = TextEditingController();
 
-  final itemOptions = FileHandler.loadItems();
+  final itemOptions = FirebaseHandler.loadItems();
 
   final double imageWidth = 400;
   final double imageHeight = 400;
@@ -28,7 +28,7 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
   String? get screenTitle => 'Take-out';
 
   Future<void> updateSessionFile() async {
-    if (!await FileHandler.writeFile(InvetoryManager.toJSON())) {
+    if (!await FirebaseHandler.sync(InvetoryManager.toJSON())) {
       print("Unable to save session data...");
     }
   }
@@ -175,9 +175,18 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
               const SizedBox(height: 40),
               OutlinedButton(
                 onPressed: () async {
+                  print("Clicked!!");
+
                   var (user, result) = submitPressed();
 
+                  print("$user, $result");
+
                   if (user == null) {
+                    showErrorDialog(
+                      context,
+                      'Error',
+                      'Unable to sync data',
+                    );
                     return;
                   }
 

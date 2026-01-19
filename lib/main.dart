@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:icons_management_system/data/file_handler.dart';
+import 'package:icons_management_system/data/firebase_handler.dart';
 import 'package:icons_management_system/data/invetory_manager.dart';
 import 'package:icons_management_system/screens/takeout_screen.dart';
 import 'package:icons_management_system/screens/search_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'data/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await FileHandler.init();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
-  InvetoryManager.loadJSON(await FileHandler.getFileContents());
+  await FirebaseHandler.init();
+
+  InvetoryManager.loadJSON(await FirebaseHandler.getSessionData());
 
   runApp(const MyApp());
 }

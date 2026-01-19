@@ -1,4 +1,4 @@
-import 'package:icons_management_system/data/file_handler.dart';
+import 'package:icons_management_system/data/firebase_handler.dart';
 
 class User {
 
@@ -24,10 +24,10 @@ class User {
 
   bool isBanned() => banned;
 
-  static Future<void> loadBans() async => bannedIDs ??= await FileHandler.getBannedIDs();
+  static Future<void> loadBans() async => bannedIDs ??= await FirebaseHandler.getBannedIDs();
 
   static User create(String name, String studentNumber) {
-    bool isBanned = bannedIDs!.contains(studentNumber);
+    bool isBanned = (bannedIDs ?? []).contains(studentNumber);
 
     return User._(name, studentNumber).withBanStatus(isBanned);
   }
