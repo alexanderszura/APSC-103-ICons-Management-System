@@ -6,13 +6,15 @@ class User {
 
   String name;
   String studentNumber;
+  String email;
 
   bool banned = false;
   
-  User._(this.name, this.studentNumber);
+  User._(this.name, this.studentNumber, this.email);
 
   String getName() => name;
   String getStudentNumber() => studentNumber;
+  String getEmail() => email;
 
   void banUser() => banned = true;
   void unbanUser() => banned = false;
@@ -24,12 +26,18 @@ class User {
 
   bool isBanned() => banned;
 
+  Map<String, dynamic> toJSON() => {
+    "name": name,
+    "student_id": studentNumber,
+    "email": email
+  };
+
   static Future<void> loadBans() async => bannedIDs ??= await FirebaseHandler.getBannedIDs();
 
-  static User create(String name, String studentNumber) {
+  static User create(String name, String studentNumber, String email) {
     bool isBanned = (bannedIDs ?? []).contains(studentNumber);
 
-    return User._(name, studentNumber).withBanStatus(isBanned);
+    return User._(name, studentNumber, email).withBanStatus(isBanned);
   }
 
   @override

@@ -7,22 +7,10 @@ abstract class FirebaseHandler {
 
   static final db = FirebaseDatabase.instance;
 
-  static List<String> itemNames = [], urlNames = [];
+  static List<Item> items = [];
 
   static Future<void> init() async {
-    List<String> names, urls;
-    (names, urls) = await _loadImages();
-
-    itemNames = names;
-    urlNames = urls;
-
-    if (itemNames.length != urlNames.length) {
-      print("Item Url Length Missmatch!");
-    }
-
-    if (names.isEmpty) {
-      addItem("Multimeter", "https://upload.wikimedia.org/wikipedia/commons/2/26/Mm6000_Klein_Tools_Multimeter.png");
-    }
+    items = await _loadImages();
 
     await User.loadBans();
   }
@@ -35,44 +23,75 @@ abstract class FirebaseHandler {
       .toList();
   }
 
-  static Future<bool> addItem(String name, String url) async {
+  static Future<bool> registerUser(User user) async {
     bool success = true;
 
-    itemNames.add(name);
-    urlNames .add(url );
+    final ref = db.ref("users").push();
 
-    final nameRef = db.ref("items/names").push();
-    final urlRef  = db.ref("items/urls") .push();
-
-    await nameRef.set(name).catchError((error) => success = false);
-    await urlRef .set(url ).catchError((error) => success = false);
+    await ref.set(user.toJSON()).catchError((error) => success = false);
 
     return success;
   }
 
-  static Future<(List<String>, List<String>)> _loadImages() async {
-    final nameEvent = await db.ref("items/names").once(DatabaseEventType.value);
-  final urlEvent  = await db.ref("items/urls").once(DatabaseEventType.value);
+  static Future<bool> addItem(String name, String url) async {
+    bool success = true;
 
-  final names = nameEvent.snapshot.children
-      .map((e) => e.value as String)
-      .toList();
+    Item item = Item(name, url);
+    items.add(item);
 
-  final urls = urlEvent.snapshot.children
-      .map((e) => e.value as String)
-      .toList();
+    final ref = db.ref("items").push();
 
-  return (names, urls);
+    await ref.set(item.toJSON(false)).catchError((error) => success = false);
+
+    return success;
   }
 
-  static List<Item> loadItems() {
-    List<Item> items = [];
+  static Future<bool> removeItem(Item item) async {
+    bool success = true;
 
-    for (int i = 0; i < itemNames.length; i++) {
-      items.add(Item(itemNames[i], urlNames[i]));
-    }
+    final ref = db.ref("items");
 
-    return items;
+    items.remove(item);
+
+    await ref.set(items).catchError((error) => success = false);
+
+    return success;
+  }
+
+  static Future<List<Item>> _loadImages() async {
+    final event = await db.ref("items").once(DatabaseEventType.value);
+
+    final data = event.snapshot.children
+      .map((e) {
+        final value = e.value;
+        if (value is Map) {
+          return Item.fromJSON(Map<String, dynamic>.from(value));
+        }
+        return null;
+      })
+      .whereType<Item>()
+      .toList();
+
+    return data;
+  }
+
+  static List<Item> getItems() => items;
+
+  static Future<List<Map<String, dynamic>>> getUserData() async {
+    final event = await db.ref("users").once(DatabaseEventType.value);
+
+    final data = event.snapshot.children
+      .map((e) {
+        final value = e.value;
+        if (value is Map) {
+          return Map<String, dynamic>.from(value);
+        }
+        return null;
+      })
+      .whereType<Map<String, dynamic>>()
+      .toList();
+
+    return data;
   }
 
   static Future<Map<String, dynamic>> getSessionData() async {

@@ -102,9 +102,8 @@ class SearchScreenState extends BaseScreenState<SearchScreen> {
       setState(() {
         InvetoryManager.removeItemFromUser(user, item);
         
-        // If the user has no more items, remove the user entry entirely
         if (InvetoryManager.inventory[user]?.isEmpty ?? false) {
-          InvetoryManager.removeUser(user);
+          InvetoryManager.removeUserItemData(user);
         }
       });
       

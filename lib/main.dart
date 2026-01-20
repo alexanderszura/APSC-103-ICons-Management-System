@@ -15,6 +15,7 @@ void main() async {
 
   await FirebaseHandler.init();
 
+  InvetoryManager.loadUserData(await FirebaseHandler.getUserData());
   InvetoryManager.loadJSON(await FirebaseHandler.getSessionData());
 
   runApp(const MyApp());
@@ -29,7 +30,7 @@ class MyApp extends StatelessWidget {
       title: 'ICon Tracker System',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
+          seedColor: Colors.blueAccent,
         ),
       ),
       home: const HomeScreen(),

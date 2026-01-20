@@ -18,6 +18,8 @@ class EntryError {
         
     return EntryError(message);
   }
+  static EntryError missingInfo() => EntryError("Missing info inputted");
+  static EntryError notRegistered() => EntryError("This user is not registered!");
 
   @override
   String toString() => getMessage();

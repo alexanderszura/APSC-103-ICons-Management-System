@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:icons_management_system/screens/search_screen.dart';
+import 'package:icons_management_system/screens/settings_screen.dart';
 import 'package:icons_management_system/screens/takeout_screen.dart';
 
 abstract class BaseScreen extends StatefulWidget {
@@ -36,7 +37,8 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
           ListTile(
             leading: const Icon(Icons.logout, color: primaryTextColor),
             title: const Text('Take-out', style: TextStyle(color: primaryTextColor)),
-            onTap: () => TakeoutScreenState.navigate(context),
+            onTap: () =>
+              TakeoutScreenState.navigate(context),
           ),
           ListTile(
             leading: const Icon(Icons.search, color: primaryTextColor),
@@ -47,7 +49,7 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
           ListTile(
             leading: const Icon(Icons.settings, color: primaryTextColor),
             title: const Text('Settings', style: TextStyle(color: primaryTextColor)),
-            onTap: () => Navigator.pop(context),
+            onTap: () => SettingsScreenState.navigate(context),
           ),
         ],
       ),

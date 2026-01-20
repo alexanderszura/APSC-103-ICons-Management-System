@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:icons_management_system/data/entry_error.dart';
+import 'package:icons_management_system/tools/entry_error.dart';
 import 'package:icons_management_system/data/firebase_handler.dart';
 import 'package:icons_management_system/data/invetory_manager.dart';
 import 'package:icons_management_system/data/item.dart';
@@ -14,10 +14,11 @@ class TakeoutScreen extends BaseScreen {
 }
 
 class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
-  final TextEditingController nameController = TextEditingController();
+  final TextEditingController nameController      = TextEditingController();
   final TextEditingController studentIdController = TextEditingController();
+  final TextEditingController emailController     = TextEditingController();
 
-  final itemOptions = FirebaseHandler.loadItems();
+  List<Item> itemOptions = FirebaseHandler.getItems();
 
   final double imageWidth = 400;
   final double imageHeight = 400;
@@ -34,16 +35,20 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
   }
 
   (User?, EntryError?) submitPressed() {
-    final name = nameController.text.trim();
     final studentNumber = studentIdController.text.trim();
 
-    if (name.isEmpty || studentNumber.isEmpty) {
+    if (studentNumber.isEmpty) {
       showErrorDialog(
         context,
         'Missing Information',
-        'Please enter both name and student ID.',
+        'Please enter student ID.',
       );
-      return (null, null);
+      return (null, EntryError.missingInfo());
+    }
+
+    if (!InvetoryManager.isRegistered(studentNumber)) {
+      _showRegisterDialog(context, studentNumber);
+      return (null, EntryError.notRegistered());
     }
 
     if (selectedItem == null) {
@@ -52,12 +57,16 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
         'No Item Selected',
         'Please select an item from the dropdown.',
       );
-      return (null, null);
+      return (null, EntryError.missingInfo());
     }
 
-    final user = User.create(name, studentNumber);
+    nameController.clear();
+    emailController.clear();
+    studentIdController.clear();
 
-    return (user, InvetoryManager.addEntry(user, selectedItem!));
+    final user = InvetoryManager.getUser(studentNumber);
+
+    return (user, InvetoryManager.addEntry(user!, selectedItem!));
   }
 
   @override
@@ -72,6 +81,110 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const TakeoutScreen()),
+    );
+  }
+
+  void _showRegisterDialog(BuildContext context, String studentNumber) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: BaseScreenState.surfaceColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: Colors.orangeAccent, width: 2),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.orangeAccent, size: 28),
+              const SizedBox(width: 12),
+              const Text(
+                "Register User",
+                style: TextStyle(color: BaseScreenState.primaryTextColor),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Add a User to the Database",
+                style: TextStyle(color: BaseScreenState.primaryTextColor)
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                style: const TextStyle(color: BaseScreenState.primaryTextColor),
+                decoration: const InputDecoration(
+                  hintText: 'User Name...',
+                  hintStyle: TextStyle(color: BaseScreenState.secondaryTextColor),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: BaseScreenState.borderColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: BaseScreenState.borderColor),
+                  ),
+                ),
+                controller: nameController,
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                style: const TextStyle(color: BaseScreenState.primaryTextColor),
+                decoration: const InputDecoration(
+                  hintText: 'User Email...',
+                  hintStyle: TextStyle(color: BaseScreenState.secondaryTextColor),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: BaseScreenState.borderColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: BaseScreenState.borderColor),
+                  ),
+                ),
+                controller: emailController,
+              )
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+
+                String name  = nameController .text;
+                String email = emailController.text;
+
+                User user = InvetoryManager.createUser(name, studentNumber, email);
+
+                if (await FirebaseHandler.registerUser(user)) {
+                  submitPressed();
+
+                  if (context.mounted) {
+                    showSuccessDialog(
+                      context,
+                      "Success!",
+                      "Successfully added $name to the Database"
+                    );
+                  }
+
+                  setState(() {
+                    selectedItem = null;
+                  });
+                } else {
+                  if (context.mounted) {
+                    showErrorDialog(
+                      context,
+                      "Database Error",
+                      "Error Adding $name to the Database"
+                    );
+                  }
+                }
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.greenAccent,
+              ),
+              child: const Text('Register', style: TextStyle(fontSize: 16)),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -94,23 +207,6 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-              SizedBox(
-                width: 260,
-                child: TextField(
-                  controller: nameController,
-                  style: const TextStyle(color: BaseScreenState.primaryTextColor),
-                  decoration: const InputDecoration(
-                    hintText: 'Full Name...',
-                    hintStyle: TextStyle(color: BaseScreenState.secondaryTextColor),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: BaseScreenState.borderColor),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: BaseScreenState.borderColor),
-                    ),
-                  ),
-                ),
-              ),
               const SizedBox(height: 20),
               SizedBox(
                 width: 260,
@@ -175,18 +271,17 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
               const SizedBox(height: 40),
               OutlinedButton(
                 onPressed: () async {
-                  print("Clicked!!");
-
                   var (user, result) = submitPressed();
 
-                  print("$user, $result");
-
                   if (user == null) {
-                    showErrorDialog(
-                      context,
-                      'Error',
-                      'Unable to sync data',
-                    );
+                    if (result != EntryError.notRegistered()) {
+                      showErrorDialog(
+                        context,
+                        'Error',
+                        'Unable to sync data',
+                      );
+                    }
+                    
                     return;
                   }
 
@@ -196,15 +291,6 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
                       'Success!',
                       'Entry added successfully for ${user.name}.',
                     );
-
-                    nameController.clear();
-                    studentIdController.clear();
-
-                    await updateSessionFile();
-
-                    setState(() {
-                      selectedItem = null;
-                    });
                   } else {
                     showErrorDialog(
                       context,
@@ -219,17 +305,15 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
                           'Success!',
                           'Entry added successfully for ${user.name} (forced).',
                         );
-
-                        await updateSessionFile();
-
-                        nameController.clear();
-                        studentIdController.clear();
-                        setState(() {
-                          selectedItem = null;
-                        });
                       },
                     );
                   }
+
+                  await updateSessionFile();
+
+                  setState(() {
+                    selectedItem = null;
+                  });
                 },
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: BaseScreenState.borderColor),
