@@ -7,9 +7,8 @@
 .buildlog/
 .history
 
-
-
 # Flutter repo-specific
+/node_modules/
 /bin/cache/
 /bin/internal/bootstrap.bat
 /bin/internal/bootstrap.sh
@@ -117,3 +116,4 @@ app.*.symbols
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
+lib/data/firebase_options.dart
