@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:firebase_database/firebase_database.dart';
+import 'package:google_sign_in/google_sign_in.dart' ;
 import 'package:icons_management_system/data/item.dart';
 import 'package:icons_management_system/data/user.dart';
 
@@ -10,9 +12,25 @@ abstract class FirebaseHandler {
   static List<Item> items = [];
 
   static Future<void> init() async {
+    if (!await login()) {
+      throw Exception("Not Signed in!");
+    }
+
     items = await _loadImages();
 
     await User.loadBans();
+  }
+
+  static Future<bool> login() async {
+    final user = await GoogleSignIn().signIn();
+
+    final userAuth = await user!.authentication;
+
+    final cred = GoogleAuthProvider.credential(idToken: userAuth.idToken, accessToken: userAuth.accessToken);
+
+    await FirebaseAuth.instance.signInWithCredential(cred);
+
+    return FirebaseAuth.instance.currentUser != null;
   }
 
   static Future<List<String>?> getBannedIDs() async {

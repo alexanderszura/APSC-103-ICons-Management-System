@@ -18,6 +18,8 @@ void main() async {
   InvetoryManager.loadUserData(await FirebaseHandler.getUserData());
   InvetoryManager.loadJSON(await FirebaseHandler.getSessionData());
 
+  // print(FirebaseAuth.instance.currentUser?.uid);
+
   runApp(const MyApp());
 }
 
