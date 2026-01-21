@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_management_system/data/firebase_handler.dart';
 import 'package:icons_management_system/data/invetory_manager.dart';
@@ -17,6 +18,8 @@ void main() async {
 
   InvetoryManager.loadUserData(await FirebaseHandler.getUserData());
   InvetoryManager.loadJSON(await FirebaseHandler.getSessionData());
+
+  print(FirebaseAuth.instance.currentUser?.uid);
 
   runApp(const MyApp());
 }
