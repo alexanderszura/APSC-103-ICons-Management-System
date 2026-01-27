@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:icons_management_system/data/inventory_item.dart';
 import 'package:icons_management_system/tools/entry_error.dart';
 import 'package:icons_management_system/data/firebase_handler.dart';
-import 'package:icons_management_system/data/invetory_manager.dart';
-import 'package:icons_management_system/data/item.dart';
+import 'package:icons_management_system/data/inventory_manager.dart';
 import 'package:icons_management_system/data/user.dart';
 import 'package:icons_management_system/screens/base_screen.dart';
 
@@ -18,18 +18,18 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
   final TextEditingController studentIdController = TextEditingController();
   final TextEditingController emailController     = TextEditingController();
 
-  List<Item> itemOptions = FirebaseHandler.getItems();
+  List<InventoryItem> itemOptions = InventoryManager.getInventory();
 
   final double imageWidth = 400;
   final double imageHeight = 400;
 
-  Item? selectedItem;
+  InventoryItem? selectedItem;
 
   @override
   String? get screenTitle => 'Take-out';
 
   Future<void> updateSessionFile() async {
-    if (!await FirebaseHandler.sync(InvetoryManager.toJSON())) {
+    if (!await FirebaseHandler.sync(InventoryManager.toJSON())) {
       print("Unable to save session data...");
     }
   }
@@ -46,7 +46,7 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
       return (null, EntryError.missingInfo());
     }
 
-    if (!InvetoryManager.isRegistered(studentNumber)) {
+    if (!InventoryManager.isRegistered(studentNumber)) {
       _showRegisterDialog(context, studentNumber);
       return (null, EntryError.notRegistered());
     }
@@ -64,9 +64,9 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
     emailController.clear();
     studentIdController.clear();
 
-    final user = InvetoryManager.getUser(studentNumber);
+    final user = InventoryManager.getUser(studentNumber);
 
-    return (user, InvetoryManager.addEntry(user!, selectedItem!));
+    return (user, InventoryManager.addEntry(user!, selectedItem!));
   }
 
   @override
@@ -151,7 +151,7 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
                 String name  = nameController .text;
                 String email = emailController.text;
 
-                User user = InvetoryManager.createUser(name, studentNumber, email);
+                User user = InventoryManager.createUser(name, studentNumber, email);
 
                 if (await FirebaseHandler.registerUser(user)) {
                   submitPressed();
@@ -242,7 +242,7 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
                   ],
                 ),
                 child: DropdownButtonHideUnderline(
-                  child: DropdownButton<Item>(
+                  child: DropdownButton<InventoryItem>(
                     value: selectedItem,
                     hint: const Text(
                       'Select Item',
@@ -298,7 +298,7 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
                       result.message,
                       showAllowButton: true,
                       onAllow: () async {
-                        InvetoryManager.addEntry(user, selectedItem!, force: true);
+                        InventoryManager.addEntry(user, selectedItem!, force: true);
 
                         showSuccessDialog(
                           context,

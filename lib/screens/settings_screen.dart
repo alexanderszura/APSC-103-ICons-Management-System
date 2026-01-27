@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:icons_management_system/data/firebase_handler.dart';
+import 'package:icons_management_system/data/inventory_manager.dart';
 import 'package:icons_management_system/data/item.dart';
 import 'package:icons_management_system/screens/base_screen.dart';
 
@@ -12,8 +13,9 @@ class SettingsScreen extends BaseScreen {
 
 class SettingsScreenState extends BaseScreenState<SettingsScreen> {
 
-  final TextEditingController itemController = TextEditingController();
-  final TextEditingController urlController  = TextEditingController();
+  final TextEditingController itemController     = TextEditingController();
+  final TextEditingController urlController      = TextEditingController();
+  final TextEditingController quantityController = TextEditingController();
 
   List<Item> itemOptions = FirebaseHandler.getItems();
 
@@ -31,6 +33,7 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
   void dispose() {
     itemController.dispose();
     urlController.dispose();
+    quantityController.dispose();
 
     super.dispose();
   }
@@ -140,11 +143,22 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
 
                 String name = itemController.text;
                 String url  = urlController .text;
+                
+                int? quantity = int.tryParse(quantityController.text);
+                if (quantity == null) {
+                  showErrorDialog(
+                    context,
+                    "Parse Error",
+                    "Quantity was given a non-integer value (non-number)"
+                  );
+
+                  return;
+                }
 
                 itemController.clear();
                 urlController .clear();
 
-                if (await FirebaseHandler.addItem(name, url)) {
+                if (await InventoryManager.addToInventory(name, url, quantity)) {
                   if (context.mounted) {
                     showSuccessDialog(
                       context,

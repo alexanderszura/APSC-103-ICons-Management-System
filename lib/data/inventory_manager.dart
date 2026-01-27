@@ -1,13 +1,29 @@
 import 'dart:collection';
+import 'package:icons_management_system/data/firebase_handler.dart';
+import 'package:icons_management_system/data/inventory_item.dart';
 import 'package:icons_management_system/tools/entry_error.dart';
 import 'package:icons_management_system/data/item.dart';
 import 'package:icons_management_system/data/user.dart';
-import 'package:icons_management_system/tools/date_from.dart';
 
-abstract class InvetoryManager {
+abstract class InventoryManager {
 
   static HashMap<User, List<Item>> inventory = HashMap();
   static HashMap<String, User>     users     = HashMap();
+
+  static List<InventoryItem> items = [];
+
+  static Future<bool> addToInventory(String name, String url, int quantity) async {
+    bool success = true;
+
+    InventoryItem item = InventoryItem(name, url, quantity);
+    items.add(item);
+
+    await FirebaseHandler.pushItem(item);
+
+    return success;
+  }
+
+  static List<InventoryItem> getInventory() => items;
 
   static User createUser(String name, String studentNumber, String email) {
     final user = User.create(name, studentNumber, email);
@@ -16,7 +32,7 @@ abstract class InvetoryManager {
     return user;
   }
   
-  static EntryError? addEntry(User user, Item item, {bool force = false}) {
+  static EntryError? addEntry(User user, InventoryItem item, {bool force = false}) {
     if (!force) {
       if (inventory.containsKey(user)) {
         return EntryError.itemOut(user);
@@ -31,7 +47,7 @@ abstract class InvetoryManager {
       inventory[user] = [];
     }
 
-    inventory[user]?.add(item.copy().withTimestamp());
+    inventory[user]?.add(item.userItem().withTimestamp());
 
     return null;
   }
@@ -74,19 +90,10 @@ abstract class InvetoryManager {
         List<Item> items = [];
         
         for (var itemData in entry["items"]) {
-          try {
-            String itemName = itemData["item"];
-            Item? item = Item.fromName(itemName)?.withTimestamp(
-              time: TimeHelper.fromString(itemData["time"])
-            );
+          Item? item = Item.fromJSON(itemData);
 
-            if (item != null) {
-              items.add(item);
-            }
-
-          } catch (e) {
-            print("Error parsing item data: $e");
-            print("Item data: $itemData");
+          if (item != null) {
+            items.add(item);
           }
         }
 

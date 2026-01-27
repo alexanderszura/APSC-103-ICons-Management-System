@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:icons_management_system/data/firebase_handler.dart';
-import 'package:icons_management_system/data/invetory_manager.dart';
+import 'package:icons_management_system/data/inventory_manager.dart';
 import 'package:icons_management_system/screens/takeout_screen.dart';
 import 'package:icons_management_system/screens/search_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -15,8 +15,8 @@ void main() async {
 
   await FirebaseHandler.init();
 
-  InvetoryManager.loadUserData(await FirebaseHandler.getUserData());
-  InvetoryManager.loadJSON(await FirebaseHandler.getSessionData());
+  InventoryManager.loadUserData(await FirebaseHandler.getUserData());
+  InventoryManager.loadJSON(await FirebaseHandler.getSessionData());
 
   // print(FirebaseAuth.instance.currentUser?.uid);
 

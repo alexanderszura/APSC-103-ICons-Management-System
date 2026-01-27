@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:firebase_database/firebase_database.dart';
 import 'package:google_sign_in/google_sign_in.dart' ;
+import 'package:icons_management_system/data/inventory_item.dart';
 import 'package:icons_management_system/data/item.dart';
 import 'package:icons_management_system/data/user.dart';
 
@@ -16,9 +17,19 @@ abstract class FirebaseHandler {
       throw Exception("Not Signed in!");
     }
 
-    items = await _loadImages();
+    items = await _loadItems();
 
     await User.loadBans();
+  }
+
+  static Future<bool> pushItem(InventoryItem item) async {
+    bool success = true;
+
+    final ref = db.ref("items").push();
+
+    await ref.set(item.toJSON()).catchError((error) => success = false);
+
+    return success;
   }
 
   static Future<bool> login() async {
@@ -51,19 +62,6 @@ abstract class FirebaseHandler {
     return success;
   }
 
-  static Future<bool> addItem(String name, String url) async {
-    bool success = true;
-
-    Item item = Item(name, url);
-    items.add(item);
-
-    final ref = db.ref("items").push();
-
-    await ref.set(item.toJSON(false)).catchError((error) => success = false);
-
-    return success;
-  }
-
   static Future<bool> removeItem(Item item) async {
     bool success = true;
 
@@ -76,7 +74,7 @@ abstract class FirebaseHandler {
     return success;
   }
 
-  static Future<List<Item>> _loadImages() async {
+  static Future<List<Item>> _loadItems() async {
     final event = await db.ref("items").once(DatabaseEventType.value);
 
     final data = event.snapshot.children

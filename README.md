@@ -1,2 +1,1 @@
-# APSC-103-Invetory-Management-System
-
+# APSC-103-Inventory-Management-System
