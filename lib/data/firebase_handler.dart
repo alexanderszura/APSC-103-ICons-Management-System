@@ -3,21 +3,16 @@ import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:firebase_database/firebase_database.dart';
 import 'package:google_sign_in/google_sign_in.dart' ;
 import 'package:icons_management_system/data/inventory_item.dart';
-import 'package:icons_management_system/data/item.dart';
 import 'package:icons_management_system/data/user.dart';
 
 abstract class FirebaseHandler {
 
   static final db = FirebaseDatabase.instance;
 
-  static List<Item> items = [];
-
   static Future<void> init() async {
     if (!await login()) {
       throw Exception("Not Signed in!");
     }
-
-    items = await _loadItems();
 
     await User.loadBans();
   }
@@ -33,16 +28,35 @@ abstract class FirebaseHandler {
   }
 
   static Future<bool> login() async {
-    final user = await GoogleSignIn().signIn();
-
-    final userAuth = await user!.authentication;
-
-    final cred = GoogleAuthProvider.credential(idToken: userAuth.idToken, accessToken: userAuth.accessToken);
-
-    await FirebaseAuth.instance.signInWithCredential(cred);
-
-    return FirebaseAuth.instance.currentUser != null;
+  if (FirebaseAuth.instance.currentUser != null) {
+    return true;
   }
+
+  await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
+
+  final GoogleSignIn googleSignIn = GoogleSignIn();
+  
+  GoogleSignInAccount? user = await googleSignIn.signInSilently();
+  
+  if (user == null) {
+    user = await googleSignIn.signIn();
+    
+    if (user == null) {
+      return false;
+    }
+  }
+
+  final userAuth = await user.authentication;
+
+  final cred = GoogleAuthProvider.credential(
+    idToken:     userAuth.idToken, 
+    accessToken: userAuth.accessToken
+  );
+
+  await FirebaseAuth.instance.signInWithCredential(cred);
+
+  return FirebaseAuth.instance.currentUser != null;
+}
 
   static Future<List<String>?> getBannedIDs() async {
     final event = await db.ref("banned_ids").once(DatabaseEventType.value);
@@ -62,36 +76,32 @@ abstract class FirebaseHandler {
     return success;
   }
 
-  static Future<bool> removeItem(Item item) async {
-    bool success = true;
-
-    final ref = db.ref("items");
-
-    items.remove(item);
-
-    await ref.set(items).catchError((error) => success = false);
-
-    return success;
-  }
-
-  static Future<List<Item>> _loadItems() async {
+  static Future<List<InventoryItem>> loadInventory() async {
     final event = await db.ref("items").once(DatabaseEventType.value);
 
     final data = event.snapshot.children
       .map((e) {
         final value = e.value;
         if (value is Map) {
-          return Item.fromJSON(Map<String, dynamic>.from(value));
+          return InventoryItem.fromJSON(Map<String, dynamic>.from(value));
         }
         return null;
       })
-      .whereType<Item>()
+      .whereType<InventoryItem>()
       .toList();
 
     return data;
   }
 
-  static List<Item> getItems() => items;
+  static Future<bool> updateInventory(List<InventoryItem> items) async {
+    bool success = true;
+
+    final ref = db.ref("items");
+
+    await ref.set(items).catchError((error) => success = false);
+
+    return success;
+  }
 
   static Future<List<Map<String, dynamic>>> getUserData() async {
     final event = await db.ref("users").once(DatabaseEventType.value);

@@ -12,6 +12,10 @@ abstract class InventoryManager {
 
   static List<InventoryItem> items = [];
 
+  static Future<void> init() async => items = await FirebaseHandler.loadInventory();
+
+  static List<InventoryItem> getInventory() => items; 
+
   static Future<bool> addToInventory(String name, String url, int quantity) async {
     bool success = true;
 
@@ -23,7 +27,17 @@ abstract class InventoryManager {
     return success;
   }
 
-  static List<InventoryItem> getInventory() => items;
+  static Future<bool> updateQuantity(InventoryItem item, int quantity) async {
+    items[items.indexOf(item)].quantity = quantity;
+
+    return await FirebaseHandler.updateInventory(items);
+  }
+
+  static Future<bool> removeItemFromInventory(InventoryItem item) async {
+    items.remove(item);
+
+    return await FirebaseHandler.updateInventory(items);
+  }
 
   static User createUser(String name, String studentNumber, String email) {
     final user = User.create(name, studentNumber, email);

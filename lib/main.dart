@@ -14,6 +14,7 @@ void main() async {
   );
 
   await FirebaseHandler.init();
+  await InventoryManager.init();
 
   InventoryManager.loadUserData(await FirebaseHandler.getUserData());
   InventoryManager.loadJSON(await FirebaseHandler.getSessionData());
@@ -29,7 +30,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ICon Tracker System',
+      title: 'iCon Managment System',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blueAccent,
@@ -52,7 +53,7 @@ class HomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              'ICon Database',
+              'iCon Database',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 48,

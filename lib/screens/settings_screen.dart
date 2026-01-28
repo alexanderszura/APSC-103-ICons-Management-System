@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:icons_management_system/data/firebase_handler.dart';
+import 'package:icons_management_system/data/inventory_item.dart';
 import 'package:icons_management_system/data/inventory_manager.dart';
-import 'package:icons_management_system/data/item.dart';
 import 'package:icons_management_system/screens/base_screen.dart';
 
 class SettingsScreen extends BaseScreen {
@@ -17,9 +16,9 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
   final TextEditingController urlController      = TextEditingController();
   final TextEditingController quantityController = TextEditingController();
 
-  List<Item> itemOptions = FirebaseHandler.getItems();
+  List<InventoryItem> itemOptions = InventoryManager.getInventory();
 
-  Item? selectedItem;
+  InventoryItem? selectedItem;
 
   static void navigate(BuildContext context) {
     Navigator.pop(context); // Close drawer
@@ -216,7 +215,7 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
               ),
               const SizedBox(height: 24),
               DropdownButtonHideUnderline(
-                  child: DropdownButton<Item>(
+                  child: DropdownButton<InventoryItem>(
                     value: selectedItem,
                     hint: const Text(
                       'Select Item',
@@ -258,7 +257,7 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
                   return;
                 }
 
-                if (await FirebaseHandler.removeItem(selectedItem!)) {
+                if (await InventoryManager.removeItemFromInventory(selectedItem!)) {
                   if (context.mounted) {
                     showSuccessDialog(
                       context,
