@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:icons_management_system/screens/inventory_screen.dart';
 import 'package:icons_management_system/screens/search_screen.dart';
 import 'package:icons_management_system/screens/settings_screen.dart';
 import 'package:icons_management_system/screens/takeout_screen.dart';
@@ -44,6 +45,11 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
             leading: const Icon(Icons.search, color: primaryTextColor),
             title: const Text('Released Items', style: TextStyle(color: primaryTextColor)),
             onTap: () => SearchScreenState.navigate(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.manage_search_sharp, color: primaryTextColor),
+            title: const Text('Inventory', style: TextStyle(color: primaryTextColor)),
+            onTap: () => InventoryScreenState.navigate(context),
           ),
           const Divider(color: Colors.white24),
           ListTile(

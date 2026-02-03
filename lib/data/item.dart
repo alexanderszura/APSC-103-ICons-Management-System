@@ -1,16 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:icons_management_system/data/firebase_handler.dart';
 import 'package:icons_management_system/tools/date_from.dart';
 
 class Item {
   String name;
-  String url;
   DateTime? time;
   
-  Item(this.name, this.url);
+  Item(this.name);
 
   String getName() => name;
-  Widget buildImage(double width, double height) => Image.network(url, fit: BoxFit.contain);
 
   Item withTimestamp({DateTime? time}) {
     time ??= DateTime.now();
@@ -19,7 +15,7 @@ class Item {
     return this;
   }
 
-  Item copy() => Item(name, url);
+  Item copy() => Item(name);
 
   DateTime? getTimestamp() => time;
 
@@ -27,8 +23,7 @@ class Item {
     try {
       return Item(
         data['item'],
-        data['url']
-      );
+      ).withTimestamp(time: TimeHelper.fromString(data['time']));
     } catch (e) {
       print("Unable to parse data...");
       print(data);
@@ -38,29 +33,10 @@ class Item {
     }
   }
 
-  Map<String, dynamic> toJSON(bool isPlayer) {
-    if (isPlayer) {
-      return {
-        "item": name,
-        "time": TimeHelper.shorten(time ?? DateTime.now())
-      };
-    }
-
-    return {
-      "item": name,
-      "url" : url,
-    };
-  }
-
-  static Item? fromName(String name) {
-    for (Item item in FirebaseHandler.getItems()) {
-      if (item.name == name) {
-        return item;
-      }
-    }
-    
-    return null;
-  }
+  Map<String, dynamic> toJSON(bool isPlayer) => {
+    "item": name,
+    "time": TimeHelper.shorten(time ?? DateTime.now())
+  };
 
   @override
   bool operator ==(Object other) {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:icons_management_system/data/firebase_handler.dart';
-import 'package:icons_management_system/data/invetory_manager.dart';
+import 'package:icons_management_system/data/inventory_manager.dart';
 import 'package:icons_management_system/screens/takeout_screen.dart';
 import 'package:icons_management_system/screens/search_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -14,9 +14,10 @@ void main() async {
   );
 
   await FirebaseHandler.init();
+  await InventoryManager.init();
 
-  InvetoryManager.loadUserData(await FirebaseHandler.getUserData());
-  InvetoryManager.loadJSON(await FirebaseHandler.getSessionData());
+  InventoryManager.loadUserData(await FirebaseHandler.getUserData());
+  InventoryManager.loadJSON(await FirebaseHandler.getSessionData());
 
   // print(FirebaseAuth.instance.currentUser?.uid);
 
@@ -29,7 +30,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ICon Tracker System',
+      title: 'iCons Managment System',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blueAccent,
@@ -52,7 +53,7 @@ class HomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              'ICon Database',
+              'iCons Database',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 48,

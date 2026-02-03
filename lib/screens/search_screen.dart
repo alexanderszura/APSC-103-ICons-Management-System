@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:icons_management_system/data/invetory_manager.dart';
+import 'package:icons_management_system/data/inventory_manager.dart';
 import 'package:icons_management_system/data/user.dart';
 import 'package:icons_management_system/data/item.dart';
 import 'package:icons_management_system/data/firebase_handler.dart';
@@ -34,7 +34,7 @@ class SearchScreenState extends BaseScreenState<SearchScreen> {
   }
 
   List<MapEntry<User, List<Item>>> _getFilteredItems() {
-    final entries = InvetoryManager.inventory.entries.toList();
+    final entries = InventoryManager.inventory.entries.toList();
     
     if (searchQuery.isEmpty) {
       return entries;
@@ -100,10 +100,10 @@ class SearchScreenState extends BaseScreenState<SearchScreen> {
 
     if (confirmed == true) {
       setState(() {
-        InvetoryManager.removeItemFromUser(user, item);
+        InventoryManager.removeItemFromUser(user, item);
         
-        if (InvetoryManager.inventory[user]?.isEmpty ?? false) {
-          InvetoryManager.removeUserItemData(user);
+        if (InventoryManager.inventory[user]?.isEmpty ?? false) {
+          InventoryManager.removeUserItemData(user);
         }
       });
       
@@ -112,7 +112,7 @@ class SearchScreenState extends BaseScreenState<SearchScreen> {
   }
 
   Future<void> updateSessionFile() async {
-    if (!await FirebaseHandler.sync(InvetoryManager.toJSON())) {
+    if (!await FirebaseHandler.sync(InventoryManager.toJSON())) {
       print("Unable to save session data...");
     }
   }

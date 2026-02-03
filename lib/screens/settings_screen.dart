@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:icons_management_system/data/firebase_handler.dart';
-import 'package:icons_management_system/data/item.dart';
+import 'package:icons_management_system/data/inventory_item.dart';
+import 'package:icons_management_system/data/inventory_manager.dart';
 import 'package:icons_management_system/screens/base_screen.dart';
 
 class SettingsScreen extends BaseScreen {
@@ -12,12 +12,13 @@ class SettingsScreen extends BaseScreen {
 
 class SettingsScreenState extends BaseScreenState<SettingsScreen> {
 
-  final TextEditingController itemController = TextEditingController();
-  final TextEditingController urlController  = TextEditingController();
+  final TextEditingController itemController     = TextEditingController();
+  final TextEditingController urlController      = TextEditingController();
+  final TextEditingController quantityController = TextEditingController();
 
-  List<Item> itemOptions = FirebaseHandler.getItems();
+  List<InventoryItem> itemOptions = InventoryManager.getInventory();
 
-  Item? selectedItem;
+  InventoryItem? selectedItem;
 
   static void navigate(BuildContext context) {
     Navigator.pop(context); // Close drawer
@@ -31,6 +32,7 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
   void dispose() {
     itemController.dispose();
     urlController.dispose();
+    quantityController.dispose();
 
     super.dispose();
   }
@@ -140,11 +142,22 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
 
                 String name = itemController.text;
                 String url  = urlController .text;
+                
+                int? quantity = int.tryParse(quantityController.text);
+                if (quantity == null) {
+                  showErrorDialog(
+                    context,
+                    "Parse Error",
+                    "Quantity was given a non-integer value (non-number)"
+                  );
+
+                  return;
+                }
 
                 itemController.clear();
                 urlController .clear();
 
-                if (await FirebaseHandler.addItem(name, url)) {
+                if (await InventoryManager.addToInventory(name, url, quantity)) {
                   if (context.mounted) {
                     showSuccessDialog(
                       context,
@@ -202,7 +215,7 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
               ),
               const SizedBox(height: 24),
               DropdownButtonHideUnderline(
-                  child: DropdownButton<Item>(
+                  child: DropdownButton<InventoryItem>(
                     value: selectedItem,
                     hint: const Text(
                       'Select Item',
@@ -244,7 +257,7 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
                   return;
                 }
 
-                if (await FirebaseHandler.removeItem(selectedItem!)) {
+                if (await InventoryManager.removeItemFromInventory(selectedItem!)) {
                   if (context.mounted) {
                     showSuccessDialog(
                       context,
