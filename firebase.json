@@ -22,5 +22,8 @@
     "frameworksBackend": {
       "region": "us-east1"
     }
+  },
+  "database": {
+    "rules": "database.rules.json"
   }
 }

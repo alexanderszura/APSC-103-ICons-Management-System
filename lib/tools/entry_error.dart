@@ -1,4 +1,4 @@
-import 'package:icons_management_system/data/invetory_manager.dart';
+import 'package:icons_management_system/data/inventory_manager.dart';
 import 'package:icons_management_system/data/user.dart';
 
 class EntryError {
@@ -10,7 +10,7 @@ class EntryError {
 
   static EntryError userBanned(User user) => EntryError("${user.name} Is Banned");
   static EntryError itemOut(User user) {
-    var itemNames = InvetoryManager.getUserItems(user);
+    var itemNames = InventoryManager.getUserItems(user);
     
     var message = itemNames.isEmpty
         ? "This user has nothing currently out"
