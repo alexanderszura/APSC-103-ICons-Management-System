@@ -199,7 +199,7 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                'ICon Database',
+                'iCons Database',
                 style: TextStyle(
                   color: BaseScreenState.primaryTextColor,
                   fontSize: 36,

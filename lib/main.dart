@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'iCon Managment System',
+      title: 'iCons Managment System',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blueAccent,
@@ -53,7 +53,7 @@ class HomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              'iCon Database',
+              'iCons Database',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 48,
