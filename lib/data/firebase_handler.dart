@@ -1,21 +1,12 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:firebase_database/firebase_database.dart';
-import 'package:google_sign_in/google_sign_in.dart' ;
 import 'package:icons_management_system/data/inventory_item.dart';
 import 'package:icons_management_system/data/user.dart';
 
 abstract class FirebaseHandler {
 
   static final db = FirebaseDatabase.instance;
-
-  static Future<void> init() async {
-    if (!await login()) {
-      throw Exception("Not Signed in!");
-    }
-
-    await User.loadBans();
-  }
 
   static Future<bool> pushItem(InventoryItem item) async {
     bool success = true;
@@ -27,36 +18,30 @@ abstract class FirebaseHandler {
     return success;
   }
 
+  static bool isLoggedIn() => FirebaseAuth.instance.currentUser != null;
+
   static Future<bool> login() async {
-  if (FirebaseAuth.instance.currentUser != null) {
-    return true;
-  }
+    if (isLoggedIn()) {
+      return true;
+    }
 
-  await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
+    try {
+      await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
 
-  final GoogleSignIn googleSignIn = GoogleSignIn();
-  
-  GoogleSignInAccount? user = await googleSignIn.signInSilently();
-  
-  if (user == null) {
-    user = await googleSignIn.signIn();
-    
-    if (user == null) {
+      final microsoftProvider = MicrosoftAuthProvider();
+
+      microsoftProvider.setCustomParameters({
+        'tenant': 'd61ecb3b-38b1-42d5-82c4-efb2838b925c'
+      });
+
+      final userCredential = await FirebaseAuth.instance.signInWithPopup(microsoftProvider);
+
+      return userCredential.user != null;
+    } catch (e) {
+      print("Sign-In Error: $e");
       return false;
     }
-  }
-
-  final userAuth = await user.authentication;
-
-  final cred = GoogleAuthProvider.credential(
-    idToken:     userAuth.idToken, 
-    accessToken: userAuth.accessToken
-  );
-
-  await FirebaseAuth.instance.signInWithCredential(cred);
-
-  return FirebaseAuth.instance.currentUser != null;
-}
+  } 
 
   static Future<List<String>?> getBannedIDs() async {
     final event = await db.ref("banned_ids").once(DatabaseEventType.value);

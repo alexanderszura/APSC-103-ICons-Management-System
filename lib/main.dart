@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:icons_management_system/data/firebase_handler.dart';
-import 'package:icons_management_system/data/inventory_manager.dart';
-import 'package:icons_management_system/screens/takeout_screen.dart';
-import 'package:icons_management_system/screens/search_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:icons_management_system/screens/home_screen.dart';
+import 'package:icons_management_system/screens/login_screen.dart';
 import 'data/firebase_options.dart';
 
 void main() async {
@@ -13,14 +12,6 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  await FirebaseHandler.init();
-  await InventoryManager.init();
-
-  InventoryManager.loadUserData(await FirebaseHandler.getUserData());
-  InventoryManager.loadJSON(await FirebaseHandler.getSessionData());
-
-  // print(FirebaseAuth.instance.currentUser?.uid);
-
   runApp(const MyApp());
 }
 
@@ -28,7 +19,9 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) {  
+    Widget home = FirebaseHandler.isLoggedIn() ? HomeScreen() : LoginScreen();
+
     return MaterialApp(
       title: 'iCons Managment System',
       theme: ThemeData(
@@ -36,80 +29,7 @@ class MyApp extends StatelessWidget {
           seedColor: Colors.blueAccent,
         ),
       ),
-      home: const HomeScreen(),
-    );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'iCons Database',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 48,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 80),
-            
-            // Take-out Button
-            OutlinedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const TakeoutScreen()),
-                );
-              },
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.white, width: 2),
-                shape: const StadiumBorder(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 60,
-                  vertical: 20,
-                ),
-              ),
-              child: const Text(
-                'Take-out',
-                style: TextStyle(color: Colors.white, fontSize: 20),
-              ),
-            ),
-            
-            const SizedBox(height: 30),
-            
-            // Search Button
-            OutlinedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SearchScreen()),
-                );
-              },
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.white, width: 2),
-                shape: const StadiumBorder(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 60,
-                  vertical: 20,
-                ),
-              ),
-              child: const Text(
-                'Search',
-                style: TextStyle(color: Colors.white, fontSize: 20),
-              ),
-            ),
-          ],
-        ),
-      ),
+      home: home,
     );
   }
 }
