@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:icons_management_system/screens/home_screen.dart';
 import 'package:icons_management_system/screens/inventory_screen.dart';
 import 'package:icons_management_system/screens/search_screen.dart';
 import 'package:icons_management_system/screens/settings_screen.dart';
@@ -64,7 +65,12 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
 
   void _navigateToHome(BuildContext context) {
     Navigator.pop(context); // Close drawer
-    Navigator.popUntil(context, (route) => route.isFirst);
+    
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      (route) => false,
+    );
   }
 
   Widget _buildMenuButton(BuildContext context) {
