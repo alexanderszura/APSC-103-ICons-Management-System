@@ -3,15 +3,18 @@ import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:firebase_database/firebase_database.dart';
 import 'package:icons_management_system/data/inventory_item.dart';
 import 'package:icons_management_system/data/user.dart';
+import 'package:flutter/foundation.dart' as foundation;
 
 abstract class FirebaseHandler {
 
-  static final db = FirebaseDatabase.instance;
+  static final db = FirebaseDatabase.instance.ref(
+    foundation.kDebugMode ? "development" : "production"
+  );
 
   static Future<bool> pushItem(InventoryItem item) async {
     bool success = true;
 
-    final ref = db.ref("items").push();
+    final ref = db.child("items").push();
 
     await ref.set(item.toJSON()).catchError((error) => success = false);
 
@@ -41,10 +44,12 @@ abstract class FirebaseHandler {
       print("Sign-In Error: $e");
       return false;
     }
-  } 
+  }
+
+  static Future<void> logout() async => await FirebaseAuth.instance.signOut();
 
   static Future<List<String>?> getBannedIDs() async {
-    final event = await db.ref("banned_ids").once(DatabaseEventType.value);
+    final event = await db.child("banned_ids").once(DatabaseEventType.value);
 
     return event.snapshot.children
       .map((e) => e.value as String)
@@ -54,7 +59,7 @@ abstract class FirebaseHandler {
   static Future<bool> registerUser(User user) async {
     bool success = true;
 
-    final ref = db.ref("users").push();
+    final ref = db.child("users").push();
 
     await ref.set(user.toJSON()).catchError((error) => success = false);
 
@@ -62,7 +67,7 @@ abstract class FirebaseHandler {
   }
 
   static Future<List<InventoryItem>> loadInventory() async {
-    final event = await db.ref("items").once(DatabaseEventType.value);
+    final event = await db.child("items").once(DatabaseEventType.value);
 
     final data = event.snapshot.children
       .map((e) {
@@ -81,7 +86,7 @@ abstract class FirebaseHandler {
   static Future<bool> updateInventory(List<InventoryItem> items) async {
     bool success = true;
 
-    final ref = db.ref("items");
+    final ref = db.child("items");
 
     await ref.set(items).catchError((error) => success = false);
 
@@ -89,7 +94,7 @@ abstract class FirebaseHandler {
   }
 
   static Future<List<Map<String, dynamic>>> getUserData() async {
-    final event = await db.ref("users").once(DatabaseEventType.value);
+    final event = await db.child("users").once(DatabaseEventType.value);
 
     final data = event.snapshot.children
       .map((e) {
@@ -106,7 +111,7 @@ abstract class FirebaseHandler {
   }
 
   static Future<Map<String, dynamic>> getSessionData() async {
-    final event = await db.ref("items_out").once(DatabaseEventType.value);
+    final event = await db.child("items_out").once(DatabaseEventType.value);
 
     var data = {
       "items_out": event.snapshot.value
@@ -119,7 +124,7 @@ abstract class FirebaseHandler {
     bool success = true;
 
     for (String key in data.keys) {
-      await db.ref(key)
+      await db.child(key)
         .set(data[key])
         .catchError((error) => success = false);
     }
