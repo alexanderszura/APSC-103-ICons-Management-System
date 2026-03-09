@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:icons_management_system/data/firebase_handler.dart';
 import 'package:icons_management_system/screens/home_screen.dart';
 import 'package:icons_management_system/screens/inventory_screen.dart';
+import 'package:icons_management_system/screens/login_screen.dart';
 import 'package:icons_management_system/screens/search_screen.dart';
 import 'package:icons_management_system/screens/settings_screen.dart';
 import 'package:icons_management_system/screens/takeout_screen.dart';
@@ -184,10 +186,31 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
     );
   }
 
+  Widget _buildLogoutButton() {
+      return OutlinedButton(
+        onPressed: () async {
+          await FirebaseHandler.logout();
+          
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+            );
+          }
+        },
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: borderColor),
+          padding: const EdgeInsets.all(12),
+        ),
+        child: const Icon(Icons.logout, color: primaryTextColor), // TODO: Maybe add username display in the future
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
+      floatingActionButton: _buildLogoutButton(),
       drawer: _buildDrawer(context),
       body: SafeArea(
         child: Builder(
