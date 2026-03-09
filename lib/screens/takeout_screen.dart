@@ -18,6 +18,8 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
   final TextEditingController studentIdController = TextEditingController();
   final TextEditingController emailController     = TextEditingController();
 
+  final TextEditingController itemController      = TextEditingController();
+
   List<InventoryItem> itemOptions = InventoryManager.getInventory();
 
   final double imageWidth = 400;
@@ -72,7 +74,10 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
   @override
   void dispose() {
     nameController.dispose();
+    emailController.dispose();
     studentIdController.dispose();
+    itemController.dispose();
+
     super.dispose();
   }
 
@@ -241,30 +246,34 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
                     ),
                   ],
                 ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<InventoryItem>(
-                    value: selectedItem,
-                    hint: const Text(
-                      'Select Item',
-                      style: TextStyle(color: BaseScreenState.secondaryTextColor),
-                    ),
-                    dropdownColor: BaseScreenState.surfaceColor,
-                    iconEnabledColor: BaseScreenState.primaryTextColor,
-                    isExpanded: true,
-                    onChanged: (value) {
-                      setState(() {
-                        selectedItem = value;
-                      });
-                    },
-                    items: itemOptions.map((item) {
-                      return DropdownMenuItem(
-                        value: item,
-                        child: Text(
-                          item.name,
-                          style: const TextStyle(color: BaseScreenState.primaryTextColor),
-                        ),
-                      );
-                    }).toList(),
+                child: DropdownMenu<InventoryItem>(
+                  initialSelection: selectedItem,
+                  controller: itemController,
+                  expandedInsets: EdgeInsets.zero,
+                  hintText: 'Select Item',
+                  enableFilter: true,
+                  dropdownMenuEntries: itemOptions.map((item) {
+                    return DropdownMenuEntry<InventoryItem>(
+                      value: item,
+                      label: item.name,
+                      style: MenuItemButton.styleFrom(
+                        foregroundColor: BaseScreenState.primaryTextColor,
+                      )
+                    );
+                  }).toList(),
+                  onSelected: (value) {
+                    setState(() {
+                      selectedItem = value;
+                    });
+                  },
+                  textStyle: const TextStyle(color: BaseScreenState.primaryTextColor),
+                  inputDecorationTheme: InputDecorationTheme(
+                    hintStyle: const TextStyle(color: BaseScreenState.secondaryTextColor),
+                    fillColor: BaseScreenState.surfaceColor,
+                    filled: true,
+                  ),
+                  menuStyle: MenuStyle(
+                    backgroundColor: WidgetStateProperty.all(BaseScreenState.surfaceColor),
                   ),
                 ),
               ),
