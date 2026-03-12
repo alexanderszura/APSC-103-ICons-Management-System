@@ -118,3 +118,4 @@ app.*.symbols
 !/dev/ci/**/Gemfile.lock
 lib/data/firebase_options.dart
 /.firebase
+.vscode/launch.json

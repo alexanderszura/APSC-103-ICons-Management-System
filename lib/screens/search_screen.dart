@@ -4,6 +4,7 @@ import 'package:icons_management_system/data/user.dart';
 import 'package:icons_management_system/data/item.dart';
 import 'package:icons_management_system/data/firebase_handler.dart';
 import 'package:icons_management_system/screens/base_screen.dart';
+import 'package:icons_management_system/tools/mail_handler.dart';
 
 class SearchScreen extends BaseScreen {
   const SearchScreen({super.key});
@@ -220,6 +221,13 @@ class SearchScreenState extends BaseScreenState<SearchScreen> {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     const SizedBox(width: 16),
+                                    GestureDetector(
+                                      onTap: () async => await MailHandler.sendEmail(user.email),
+                                      child: const Icon(
+                                        Icons.email_outlined,
+                                        color: Colors.blueAccent,
+                                      ),
+                                    ),
                                     GestureDetector(
                                       onTap: () => _removeItem(user, item),
                                       child: const Text(
