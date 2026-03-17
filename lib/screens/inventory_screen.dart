@@ -55,6 +55,9 @@ class InventoryScreenState extends BaseScreenState<InventoryScreen> {
   }
 
   void _showEditDialog(InventoryItem item, BuildContext context) {
+    // prefill controller with current quantity
+    quantityController.text = item.quantity.toString();
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -109,7 +112,7 @@ class InventoryScreenState extends BaseScreenState<InventoryScreen> {
                   showErrorDialog(
                     context,
                     "Illegal Input Error",
-                    "Could not determain the number value of quantity"
+                    "Could not determine the number value of quantity"
                   );
 
                   return;
@@ -117,6 +120,7 @@ class InventoryScreenState extends BaseScreenState<InventoryScreen> {
 
                 await InventoryManager.updateQuantity(item, quantity);
 
+                quantityController.clear();
                 setState(() {});
               },
               style: TextButton.styleFrom(
@@ -492,7 +496,7 @@ class InventoryScreenState extends BaseScreenState<InventoryScreen> {
                                     ),
                                     const Spacer(),
                                     Text(
-                                      'Total: ${item.quantity}',
+                                      'Total: ${item.quantity}   Out: ${InventoryManager.amountOutFor(item)}   On-hand: ${InventoryManager.amountOnHandFor(item)}',
                                       style: const TextStyle(
                                         color: BaseScreenState.primaryTextColor,
                                         fontSize: 16,
