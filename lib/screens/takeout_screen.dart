@@ -1,3 +1,4 @@
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_management_system/data/inventory_item.dart';
 import 'package:icons_management_system/tools/entry_error.dart';
@@ -14,6 +15,7 @@ class TakeoutScreen extends BaseScreen {
 }
 
 class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
+  
   final TextEditingController nameController      = TextEditingController();
   final TextEditingController studentIdController = TextEditingController();
   final TextEditingController emailController     = TextEditingController();
@@ -21,14 +23,25 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
   final TextEditingController itemController      = TextEditingController();
 
   List<InventoryItem> itemOptions = InventoryManager.getInventory();
+  Set<InventoryItem> selectedItems = {};
 
   final double imageWidth = 400;
   final double imageHeight = 400;
 
-  InventoryItem? selectedItem;
-
   @override
   String? get screenTitle => 'Take-out';
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshItems();
+  }
+
+  void _refreshItems() {
+    setState(() {
+      itemOptions = InventoryManager.getInventory();
+    });
+  }
 
   Future<void> updateSessionFile() async {
     if (!await FirebaseHandler.sync(InventoryManager.toJSON())) {
@@ -53,7 +66,7 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
       return (null, EntryError.notRegistered());
     }
 
-    if (selectedItem == null) {
+    if (selectedItems.isEmpty) {
       showErrorDialog(
         context,
         'No Item Selected',
@@ -68,7 +81,7 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
 
     final user = InventoryManager.getUser(studentNumber);
 
-    return (user, InventoryManager.addEntry(user!, selectedItem!));
+    return (user, InventoryManager.addEntry(user!, selectedItems.toList()));
   }
 
   @override
@@ -170,7 +183,7 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
                   }
 
                   setState(() {
-                    selectedItem = null;
+                    selectedItems = {};
                   });
                 } else {
                   if (context.mounted) {
@@ -246,34 +259,75 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
                     ),
                   ],
                 ),
-                child: DropdownMenu<InventoryItem>(
-                  initialSelection: selectedItem,
-                  controller: itemController,
-                  expandedInsets: EdgeInsets.zero,
-                  hintText: 'Select Item',
-                  enableFilter: true,
-                  dropdownMenuEntries: itemOptions.map((item) {
-                    return DropdownMenuEntry<InventoryItem>(
-                      value: item,
-                      label: item.name,
-                      style: MenuItemButton.styleFrom(
-                        foregroundColor: BaseScreenState.primaryTextColor,
-                      )
-                    );
-                  }).toList(),
-                  onSelected: (value) {
-                    setState(() {
-                      selectedItem = value;
-                    });
-                  },
-                  textStyle: const TextStyle(color: BaseScreenState.primaryTextColor),
-                  inputDecorationTheme: InputDecorationTheme(
-                    hintStyle: const TextStyle(color: BaseScreenState.secondaryTextColor),
-                    fillColor: BaseScreenState.surfaceColor,
-                    filled: true,
-                  ),
-                  menuStyle: MenuStyle(
-                    backgroundColor: WidgetStateProperty.all(BaseScreenState.surfaceColor),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton2<InventoryItem>(
+                    isExpanded: true,
+                    hint: Text(
+                      selectedItems.isEmpty
+                          ? 'Select Item'
+                          : selectedItems.map((e) => e.name).join(', '),
+                      style: const TextStyle(color: BaseScreenState.primaryTextColor),
+                    ),
+                    items: itemOptions.map((item) {
+                      return DropdownItem<InventoryItem>(
+                        value: item,
+                        enabled: false,
+                        child: StatefulBuilder(                          
+                          builder: (context, menuSetState) {
+                            final isSelected = selectedItems.contains(item);
+
+                            return InkWell(
+                              onTap: () {
+                                setState(() {
+                                  if (selectedItems.contains(item)) {
+                                    selectedItems.remove(item);
+                                  } else {
+                                    selectedItems.add(item);
+                                  }
+                                });
+                                menuSetState(() {});
+                              },
+                              child: Row(
+                                children: [
+                                  Checkbox(
+                                    value: isSelected,
+                                    onChanged: (checked) {
+                                      setState(() {
+                                        if (checked == true) {
+                                          selectedItems.add(item);
+                                        } else {
+                                          selectedItems.remove(item);
+                                        }
+                                      });
+                                      menuSetState(() {});
+                                    },
+                                  ),
+                                  Text(
+                                    item.name,
+                                    style: const TextStyle(
+                                      color: BaseScreenState.primaryTextColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    }).toList(),
+                    buttonStyleData: ButtonStyleData(
+                      decoration: BoxDecoration(
+                        color: BaseScreenState.surfaceColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    dropdownStyleData: DropdownStyleData(
+                      decoration: BoxDecoration(
+                        color: BaseScreenState.surfaceColor,
+                      ),
+                    ),
+
+                    onChanged: (_) {},
                   ),
                 ),
               ),
@@ -307,7 +361,7 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
                       result.message,
                       showAllowButton: true,
                       onAllow: () async {
-                        InventoryManager.addEntry(user, selectedItem!, force: true);
+                        InventoryManager.addEntry(user, selectedItems.toList(), force: true);
 
                         showSuccessDialog(
                           context,
@@ -321,7 +375,7 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
                   await updateSessionFile();
 
                   setState(() {
-                    selectedItem = null;
+                    selectedItems = {};
                   });
                 },
                 style: OutlinedButton.styleFrom(
@@ -349,9 +403,9 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: selectedItem == null
+              child: selectedItems.isEmpty
                   ? const SizedBox()
-                  : selectedItem!.buildImage(imageWidth, imageHeight),
+                  : selectedItems.last.buildImage(imageWidth, imageHeight),
             ),
           ),
         ],

@@ -27,8 +27,16 @@ abstract class InventoryManager {
     return success;
   }
 
-  static Future<bool> updateQuantity(InventoryItem item, int quantity) async {
-    items[items.indexOf(item)].quantity = quantity;
+  static Future<bool> updateItem(InventoryItem item, int? quantity, String? url) async {
+    int index = items.indexOf(item);
+
+    if (quantity != null) {
+      items[index].quantity = quantity;
+    }
+
+    if (url != null && url.isNotEmpty) {
+      items[index].url = url;
+    }
 
     return await FirebaseHandler.updateInventory(items);
   }
@@ -46,7 +54,7 @@ abstract class InventoryManager {
     return user;
   }
   
-  static EntryError? addEntry(User user, InventoryItem item, {bool force = false}) {
+  static EntryError? addEntry(User user, List<InventoryItem> items, {bool force = false}) {
     if (!force) {
       if (inventory.containsKey(user)) {
         return EntryError.itemOut(user);
@@ -61,7 +69,10 @@ abstract class InventoryManager {
       inventory[user] = [];
     }
 
-    inventory[user]?.add(item.userItem().withTimestamp());
+    DateTime now = DateTime.now();
+    for (InventoryItem item in items) {
+      inventory[user]?.add(item.userItem().withTimestamp(time: now));
+    }
 
     return null;
   }

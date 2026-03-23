@@ -55,8 +55,9 @@ class InventoryScreenState extends BaseScreenState<InventoryScreen> {
   }
 
   void _showEditDialog(InventoryItem item, BuildContext context) {
-    // prefill controller with current quantity
+    // prefill controllers
     quantityController.text = item.quantity.toString();
+    urlController.text = item.url.toString();
 
     showDialog(
       context: context,
@@ -84,7 +85,7 @@ class InventoryScreenState extends BaseScreenState<InventoryScreen> {
                 "Edit ${item.name} Quantity",
                 style: TextStyle(color: BaseScreenState.primaryTextColor)
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
               TextField(
                 style: const TextStyle(color: BaseScreenState.primaryTextColor),
                 decoration: const InputDecoration(
@@ -99,6 +100,26 @@ class InventoryScreenState extends BaseScreenState<InventoryScreen> {
                 ),
                 controller: quantityController,
               ),
+              const SizedBox(height: 24),
+              Text(
+                "Edit ${item.name} URL",
+                style: TextStyle(color: BaseScreenState.primaryTextColor)
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                style: const TextStyle(color: BaseScreenState.primaryTextColor),
+                decoration: const InputDecoration(
+                  hintText: 'URL...',
+                  hintStyle: TextStyle(color: BaseScreenState.secondaryTextColor),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: BaseScreenState.borderColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: BaseScreenState.borderColor),
+                  ),
+                ),
+                controller: urlController,
+              ),
             ],
           ),
           actions: [
@@ -107,18 +128,19 @@ class InventoryScreenState extends BaseScreenState<InventoryScreen> {
                 Navigator.of(context).pop();
                 
                 int? quantity = int.tryParse(quantityController.text);
+                bool isValidUrl = Uri.parse(urlController.text).isAbsolute;
 
-                if (quantity == null) {
+                if (quantity == null && !isValidUrl) {
                   showErrorDialog(
                     context,
                     "Illegal Input Error",
-                    "Could not determine the number value of quantity"
+                    "No input was provided or the input was invalid"
                   );
 
                   return;
                 }
 
-                await InventoryManager.updateQuantity(item, quantity);
+                await InventoryManager.updateItem(item, quantity, urlController.text);
 
                 quantityController.clear();
                 setState(() {});
@@ -126,7 +148,7 @@ class InventoryScreenState extends BaseScreenState<InventoryScreen> {
               style: TextButton.styleFrom(
                 foregroundColor: Colors.greenAccent,
               ),
-              child: const Text('Register', style: TextStyle(fontSize: 16)),
+              child: const Text('Update', style: TextStyle(fontSize: 16)),
             ),
           ],
         );
