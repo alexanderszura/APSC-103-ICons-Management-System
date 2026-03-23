@@ -5,6 +5,7 @@ import 'package:icons_management_system/screens/inventory_screen.dart';
 import 'package:icons_management_system/screens/login_screen.dart';
 import 'package:icons_management_system/screens/search_screen.dart';
 import 'package:icons_management_system/screens/settings_screen.dart';
+import 'package:icons_management_system/screens/users_screen.dart';
 import 'package:icons_management_system/screens/takeout_screen.dart';
 
 abstract class BaseScreen extends StatefulWidget {
@@ -55,6 +56,11 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
             onTap: () => InventoryScreenState.navigate(context),
           ),
           const Divider(color: Colors.white24),
+          ListTile(
+            leading: const Icon(Icons.people, color: primaryTextColor),
+            title: const Text('Users', style: TextStyle(color: primaryTextColor)),
+            onTap: () => UsersScreenState.navigate(context),
+          ),
           ListTile(
             leading: const Icon(Icons.settings, color: primaryTextColor),
             title: const Text('Settings', style: TextStyle(color: primaryTextColor)),

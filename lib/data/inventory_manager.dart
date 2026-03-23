@@ -27,8 +27,16 @@ abstract class InventoryManager {
     return success;
   }
 
-  static Future<bool> updateQuantity(InventoryItem item, int quantity) async {
-    items[items.indexOf(item)].quantity = quantity;
+  static Future<bool> updateItem(InventoryItem item, int? quantity, String? url) async {
+    int index = items.indexOf(item);
+
+    if (quantity != null) {
+      items[index].quantity = quantity;
+    }
+
+    if (url != null && url.isNotEmpty) {
+      items[index].url = url;
+    }
 
     return await FirebaseHandler.updateInventory(items);
   }
@@ -39,14 +47,14 @@ abstract class InventoryManager {
     return await FirebaseHandler.updateInventory(items);
   }
 
-  static User createUser(String name, String studentNumber, String email) {
-    final user = User.create(name, studentNumber, email);
+  static User createUser(String name, String studentNumber, String email, {int strikes = 0}) {
+    final user = User.create(name, studentNumber, email, strikes: strikes);
     users[studentNumber] = user;
 
     return user;
   }
   
-  static EntryError? addEntry(User user, InventoryItem item, {bool force = false}) {
+  static EntryError? addEntry(User user, List<InventoryItem> items, {bool force = false}) {
     if (!force) {
       if (inventory.containsKey(user)) {
         return EntryError.itemOut(user);
@@ -61,7 +69,10 @@ abstract class InventoryManager {
       inventory[user] = [];
     }
 
-    inventory[user]?.add(item.userItem().withTimestamp());
+    DateTime now = DateTime.now();
+    for (InventoryItem item in items) {
+      inventory[user]?.add(item.userItem().withTimestamp(time: now));
+    }
 
     return null;
   }
@@ -75,54 +86,99 @@ abstract class InventoryManager {
 
   static User? getUser(String studentNumber) => users[studentNumber];
 
-  static HashMap<String, dynamic> toJSON() {
-    final map = HashMap<String, List>();
+  static Map<String, dynamic> toJSON() {
+    final Map<String, dynamic> map = {};
 
-    map['items_out'] = [];
+    final Map<String, dynamic> itemsOutMap = {};
 
     inventory.forEach((user, items) {
-      Map value = {"student_id" : user.studentNumber, "items" : items.map((item) => item.toJSON(true)).toList()};
-      map['items_out']?.add(value);
+      final studentId = user.studentNumber;
+
+      final Map<String, dynamic> itemMap = {};
+
+      for (int i = 0; i < items.length; i++) {
+        itemMap["item_$i"] = items[i].toJSON(true);
+      }
+
+      itemsOutMap[studentId] = {
+        "student_id": studentId,
+        "items": itemMap,
+      };
     });
+
+    map['items_out'] = itemsOutMap;
 
     return map;
   }
 
+  // Return how many of a specific inventory item are currently out (checked out by users)
+  static int amountOutFor(InventoryItem item) {
+    var count = 0;
+    inventory.values.forEach((list) {
+      for (final it in list) {
+        if (it.name == item.name) count++;
+      }
+    });
+    return count;
+  }
+
+  static int amountOnHandFor(InventoryItem item) {
+    final out = amountOutFor(item);
+    return item.quantity - out;
+  }
+
   static void loadUserData(List<Map<String, dynamic>> data) async {
     for (var entry in data) {
-      createUser(entry["name"], entry["student_id"], entry["email"]);
+      int strikes = 0;
+      if (entry.containsKey('strikes')) {
+        try {
+          strikes = entry['strikes'] is int ? entry['strikes'] : int.parse(entry['strikes'].toString());
+        } catch (_) {}
+      }
+
+      createUser(entry["name"], entry["student_id"], entry["email"], strikes: strikes);
     }
   }
 
-  static void loadJSON(Map<String, dynamic> data) async {
+  static void loadJSON(Map<String, dynamic> data) {
     if (!data.containsKey("items_out") || data["items_out"] == null) {
       return;
     }
 
     try {
-      for (var entry in data["items_out"]) {
-        List<Item> items = [];
-        
-        for (var itemData in entry["items"]) {
-          Item? item = Item.fromJSON(itemData);
+      final itemsOut = Map<String, dynamic>.from(data["items_out"]);
 
-          if (item != null) {
-            items.add(item);
+      for (final entry in itemsOut.entries) {
+        final studentId = entry.key;
+        final entryData = Map<String, dynamic>.from(entry.value);
+
+        final List<Item> items = [];
+
+        if (entryData.containsKey("items") && entryData["items"] != null) {
+          final itemsMap = Map<String, dynamic>.from(entryData["items"]);
+
+          for (final itemEntry in itemsMap.entries) {
+            final itemData = Map<String, dynamic>.from(itemEntry.value);
+
+            Item? item = Item.fromJSON(itemData);
+
+            if (item != null) {
+              items.add(item);
+            }
           }
         }
 
-        User? user = getUser(entry["student_id"]);
+        User? user = getUser(studentId);
 
         if (user != null) {
           inventory[user] = items;
         } else {
-          print("Couldn't find user inventory to store items: ${items.join(', ')}");
+          print("Couldn't find user $studentId for items: $items");
         }
       }
     } catch (e) {
       print("Error loading JSON data: $e");
       print("Data: $data");
-      print(e);
     }
   }
 }
