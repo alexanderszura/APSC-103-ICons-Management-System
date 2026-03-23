@@ -7,18 +7,23 @@ import 'package:flutter/foundation.dart' as foundation;
 
 abstract class FirebaseHandler {
 
+  FirebaseHandler._();
+
   static final db = FirebaseDatabase.instance.ref(
     foundation.kDebugMode ? "development" : "production"
   );
 
   static Future<bool> pushItem(InventoryItem item) async {
-    bool success = true;
+    try {
+      final ref = db.child("items").child(item.name);
 
-    final ref = db.child("items").push();
+      await ref.set(item.toJSON());
 
-    await ref.set(item.toJSON()).catchError((error) => success = false);
-
-    return success;
+      return true;
+    } catch (e) {
+      print("Push Item Error: $e");
+      return false;
+    }
   }
 
   static bool isLoggedIn() => FirebaseAuth.instance.currentUser != null;
@@ -48,39 +53,47 @@ abstract class FirebaseHandler {
 
   static Future<void> logout() async => await FirebaseAuth.instance.signOut();
 
-  static Future<List<String>?> getBannedIDs() async {
+  static Future<List<String>> getBannedIDs() async {
     final event = await db.child("banned_ids").once(DatabaseEventType.value);
 
-    return event.snapshot.children
-      .map((e) => e.value as String)
-      .toList();
+    if (event.snapshot.value == null) return [];
+
+    final map = Map<String, dynamic>.from(event.snapshot.value as Map);
+
+    return map.keys.toList();
   }
 
   static Future<bool> registerUser(User user) async {
-    bool success = true;
+    try {
+      final ref = db.child("users").child(user.studentNumber);
 
-    final ref = db.child("users").push();
+      await ref.set({
+        ...user.toJSON(),
+        "strikes": 0,
+      });
 
-    await ref.set(user.toJSON()).catchError((error) => success = false);
-
-    return success;
+      return true;
+    } catch (e) {
+      print("Register Error: $e");
+      return false;
+    }
   }
 
   static Future<List<InventoryItem>> loadInventory() async {
     final event = await db.child("items").once(DatabaseEventType.value);
 
-    final data = event.snapshot.children
-      .map((e) {
-        final value = e.value;
-        if (value is Map) {
-          return InventoryItem.fromJSON(Map<String, dynamic>.from(value));
-        }
-        return null;
-      })
-      .whereType<InventoryItem>()
-      .toList();
+    if (event.snapshot.value == null) return [];
 
-    return data;
+    final map = Map<String, dynamic>.from(event.snapshot.value as Map);
+
+    return map.entries.map((entry) {
+      return InventoryItem.fromJSON(
+        Map<String, dynamic>.from(entry.value),
+      );
+    })
+    .where((item) => item != null)
+    .cast<InventoryItem>()
+    .toList();
   }
 
   static Future<bool> updateInventory(List<InventoryItem> items) async {
@@ -88,7 +101,13 @@ abstract class FirebaseHandler {
 
     final ref = db.child("items");
 
-    await ref.set(items).catchError((error) => success = false);
+    // Store inventory as a map keyed by item name to avoid numeric array keys
+    final Map<String, dynamic> map = {};
+    for (final it in items) {
+      map[it.name] = it.toJSON();
+    }
+
+    await ref.set(map).catchError((error) => success = false);
 
     return success;
   }
@@ -96,18 +115,13 @@ abstract class FirebaseHandler {
   static Future<List<Map<String, dynamic>>> getUserData() async {
     final event = await db.child("users").once(DatabaseEventType.value);
 
-    final data = event.snapshot.children
-      .map((e) {
-        final value = e.value;
-        if (value is Map) {
-          return Map<String, dynamic>.from(value);
-        }
-        return null;
-      })
-      .whereType<Map<String, dynamic>>()
-      .toList();
+    if (event.snapshot.value == null) return [];
 
-    return data;
+    final map = Map<String, dynamic>.from(event.snapshot.value as Map);
+
+    return map.values
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
   }
 
   static Future<Map<String, dynamic>> getSessionData() async {
@@ -130,5 +144,26 @@ abstract class FirebaseHandler {
     }
 
     return success;
+  }
+
+  static Future<bool> setUserStrikes(String studentNumber, int strikes) async {
+    try {
+      final userRef = db.child('users').child(studentNumber);
+
+      await userRef.update({'strikes': strikes});
+
+      final bannedRef = db.child('banned_ids').child(studentNumber);
+
+      if (strikes >= 2) {
+        await bannedRef.set(true);
+      } else {
+        await bannedRef.remove();
+      }
+
+      return true;
+    } catch (e) {
+      print("Strike Error: $e");
+      return false;
+    }
   }
 }
