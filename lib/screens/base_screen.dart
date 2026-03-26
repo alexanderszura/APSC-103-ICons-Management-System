@@ -145,7 +145,7 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
               style: TextButton.styleFrom(
                 foregroundColor: Colors.redAccent,
               ),
-              child: const Text('OK', style: TextStyle(fontSize: 16)),
+              child: const Text('REJECT', style: TextStyle(fontSize: 16)),
             ),
           ],
         );

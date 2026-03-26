@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get_time_ago/get_time_ago.dart';
 import 'package:icons_management_system/data/inventory_manager.dart';
 import 'package:icons_management_system/data/user.dart';
 import 'package:icons_management_system/data/item.dart';
@@ -202,22 +203,49 @@ class SearchScreenState extends BaseScreenState<SearchScreen> {
                                 child: Row(
                                   children: [
                                     Expanded(
-                                      child: Text(
-                                        '${user.name} #${user.studentNumber}',
-                                        style: const TextStyle(
-                                          color: BaseScreenState.primaryTextColor,
-                                          fontSize: 16,
-                                        ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            user.name,
+                                            style: const TextStyle(
+                                              color: BaseScreenState.primaryTextColor,
+                                              fontSize: 16,
+                                            )
+                                          ),
+                                          Text(
+                                            GetTimeAgo.parse(item.time!),
+                                            style: const TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 16,
+                                            )
+                                          )
+                                        ]
                                       ),
                                     ),
                                     const Spacer(),
-                                    Text(
-                                      item.name,
-                                      style: const TextStyle(
-                                        color: BaseScreenState.primaryTextColor,
-                                        fontSize: 16,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            item.name,
+                                            style: const TextStyle(
+                                              color: BaseScreenState.primaryTextColor,
+                                              fontSize: 16,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          Text(
+                                            "By: ${item.staffName}",
+                                            style: const TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 16,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      )
                                     ),
                                     const SizedBox(width: 16),
                                     GestureDetector(

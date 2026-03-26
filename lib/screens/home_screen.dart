@@ -35,7 +35,7 @@ class HomeScreenState extends BaseScreenState<HomeScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Text(
-            'iCons Database',
+            'iCons Inventory System',
             style: TextStyle(
               color: Colors.white,
               fontSize: 48,
