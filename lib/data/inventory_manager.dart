@@ -97,7 +97,7 @@ abstract class InventoryManager {
 
     DateTime now = DateTime.now();
     for (InventoryItem item in items) {
-      inventory[user]?.add(item.userItem().withTimestamp(time: now));
+      inventory[user]?.add(item.userItem().withInfo(staff: FirebaseHandler.userName ?? "No Staff", time: now));
     }
 
     return null;

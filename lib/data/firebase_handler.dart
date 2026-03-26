@@ -14,7 +14,7 @@ abstract class FirebaseHandler {
     foundation.kDebugMode ? "development" : "production"
   );
 
-  static String? userName;
+  static String? get userName => FirebaseAuth.instance.currentUser?.displayName;
 
   static Future<bool> pushItem(InventoryItem item) async {
     try {
@@ -46,8 +46,6 @@ abstract class FirebaseHandler {
       });
 
       final userCredential = await FirebaseAuth.instance.signInWithPopup(microsoftProvider);
-
-      userName = userCredential.user?.displayName;
 
       return userCredential.user != null;
     } catch (e) {
