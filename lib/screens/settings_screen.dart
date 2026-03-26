@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:icons_management_system/data/inventory_item.dart';
+import 'package:icons_management_system/data/firebase_handler.dart';
 import 'package:icons_management_system/data/inventory_manager.dart';
 import 'package:icons_management_system/screens/base_screen.dart';
 
@@ -12,13 +12,13 @@ class SettingsScreen extends BaseScreen {
 
 class SettingsScreenState extends BaseScreenState<SettingsScreen> {
 
-  final TextEditingController itemController     = TextEditingController();
-  final TextEditingController urlController      = TextEditingController();
-  final TextEditingController quantityController = TextEditingController();
+  TextEditingController minLengthController = TextEditingController(
+    text: InventoryManager.minLength.toString()
+  );
 
-  List<InventoryItem> itemOptions = InventoryManager.getInventory();
-
-  InventoryItem? selectedItem;
+  TextEditingController maxLengthController = TextEditingController(
+    text: InventoryManager.maxLength.toString()
+  );
 
   static void navigate(BuildContext context) {
     Navigator.pop(context); // Close drawer
@@ -30,9 +30,8 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
 
   @override
   void dispose() {
-    itemController.dispose();
-    urlController.dispose();
-    quantityController.dispose();
+    minLengthController.dispose();
+    maxLengthController.dispose();
 
     super.dispose();
   }
@@ -57,17 +56,53 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            _sectionTitle("Items"),
+            _sectionTitle("Student ID"),
             _settingsCard(
               children: [
-                _buttonTile(
-                  "Add Item",
-                  () => _addItemDialog(context)
+                _dropdownTile(
+                  title: "Student ID Type",
+                  value: InventoryManager.studentIDType,
+                  items: StudentID.values,
+                  onChanged: (value) async {
+                    if (value == null) return;
+
+                    InventoryManager.studentIDType = value;
+
+                    await FirebaseHandler.setStudentIdType(value);
+
+                    setState(() {});
+                  }
                 ),
-                _buttonTile(
-                  "Removes Item",
-                  () => _removeItemDialog(context),
+                _textTile(
+                  title: "Student ID Min Length",
+                  controller: minLengthController,
+                  onChange: (text) async {
+                    int? value = int.tryParse(text);
+
+                    if (value == null) {
+                      return;
+                    }
+                    
+                    InventoryManager.minLength = value;
+
+                    await FirebaseHandler.setIDBounds(value, null);
+                  }
                 ),
+                _textTile(
+                  title: "Student ID Max Length",
+                  controller: maxLengthController,
+                  onChange: (text) async {
+                    int? value = int.tryParse(text);
+
+                    if (value == null) {
+                      return;
+                    }
+                    
+                    InventoryManager.maxLength = value;
+
+                    await FirebaseHandler.setIDBounds(null, value);
+                  }
+                )
               ]
             )
           ],
@@ -76,216 +111,7 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
     );
   }
 
-  void _addItemDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: BaseScreenState.surfaceColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.greenAccent, width: 2),
-          ),
-          title: Row(
-            children: [
-              Icon(Icons.info_outline, color: Colors.greenAccent, size: 28),
-              const SizedBox(width: 12),
-              const Text(
-                "Add Item",
-                style: TextStyle(color: BaseScreenState.primaryTextColor),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "Add an Item to the Database",
-                style: TextStyle(color: BaseScreenState.primaryTextColor)
-              ),
-              const SizedBox(height: 24),
-              TextField(
-                style: const TextStyle(color: BaseScreenState.primaryTextColor),
-                decoration: const InputDecoration(
-                  hintText: 'Item Name...',
-                  hintStyle: TextStyle(color: BaseScreenState.secondaryTextColor),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: BaseScreenState.borderColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: BaseScreenState.borderColor),
-                  ),
-                ),
-                controller: itemController,
-              ),
-              const SizedBox(height: 24),
-              TextField(
-                style: const TextStyle(color: BaseScreenState.primaryTextColor),
-                decoration: const InputDecoration(
-                  hintText: 'Image URL...',
-                  hintStyle: TextStyle(color: BaseScreenState.secondaryTextColor),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: BaseScreenState.borderColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: BaseScreenState.borderColor),
-                  ),
-                ),
-                controller: urlController,
-              )
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-
-                String name = itemController.text;
-                String url  = urlController .text;
-                
-                int? quantity = int.tryParse(quantityController.text);
-                if (quantity == null) {
-                  showErrorDialog(
-                    context,
-                    "Parse Error",
-                    "Quantity was given a non-integer value (non-number)"
-                  );
-
-                  return;
-                }
-
-                itemController.clear();
-                urlController .clear();
-
-                if (await InventoryManager.addToInventory(name, url, quantity)) {
-                  if (context.mounted) {
-                    showSuccessDialog(
-                      context,
-                      "Success!",
-                      "Successfully added $name to the Database"
-                    );
-                  }
-                } else {
-                  if (context.mounted) {
-                    showErrorDialog(
-                      context,
-                      "Database Error",
-                      "Error Adding $name with url $url to the database"
-                    );
-                  }
-                }
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.greenAccent,
-              ),
-              child: const Text('Submit', style: TextStyle(fontSize: 16)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _removeItemDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: BaseScreenState.surfaceColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.redAccent, width: 2),
-          ),
-          title: Row(
-            children: [
-              Icon(Icons.info_outline, color: Colors.redAccent, size: 28),
-              const SizedBox(width: 12),
-              const Text(
-                "Remove Item",
-                style: TextStyle(color: BaseScreenState.primaryTextColor),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "Remove an Item from the Database",
-                style: TextStyle(color: BaseScreenState.primaryTextColor)
-              ),
-              const SizedBox(height: 24),
-              DropdownButtonHideUnderline(
-                  child: DropdownButton<InventoryItem>(
-                    value: selectedItem,
-                    hint: const Text(
-                      'Select Item',
-                      style: TextStyle(color: BaseScreenState.secondaryTextColor),
-                    ),
-                    dropdownColor: BaseScreenState.surfaceColor,
-                    iconEnabledColor: BaseScreenState.primaryTextColor,
-                    isExpanded: true,
-                    onChanged: (value) {
-                      setState(() {
-                        selectedItem = value;
-                      });
-                    },
-                    items: itemOptions.map((item) {
-                      return DropdownMenuItem(
-                        value: item,
-                        child: Text(
-                          item.name,
-                          style: const TextStyle(color: BaseScreenState.primaryTextColor),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-
-                if (selectedItem == null) {
-                  showErrorDialog(
-                    context, 
-                    "Error",
-                    "No Item Selected"
-                  );
-
-                  return;
-                }
-
-                if (await InventoryManager.removeItemFromInventory(selectedItem!)) {
-                  if (context.mounted) {
-                    showSuccessDialog(
-                      context,
-                      "Success!",
-                      "Successfully removed ${selectedItem!.name} from the Database"
-                    );
-                  }
-                } else {
-                  if (context.mounted) {
-                    showErrorDialog(
-                      context,
-                      "Database Error",
-                      "Error removing ${selectedItem!.name} from the database"
-                    );
-                  }
-                }
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.redAccent,
-              ),
-              child: const Text('Remove', style: TextStyle(fontSize: 16)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
+  // ignore: unused_element
   Widget _sectionTitle(String title) {
     return Align(
       alignment: Alignment.centerLeft,
@@ -303,23 +129,50 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
     );
   }
 
+  // ignore: unused_element
   Widget _settingsCard({required List<Widget> children}) {
-  return SizedBox(
-    width: double.infinity,
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white24),
+    return SizedBox(
+      width: double.infinity,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2A2A2A),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white24),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: children
+            .map((child) => Expanded(child: child))
+            .toList(),
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: children,
+    );
+  }
+
+  // ignore: unused_element
+  Widget _textTile({
+    required String title,
+    required TextEditingController controller,
+    required Function(String) onChange,
+  }) {
+    return ListTile(
+      title: Text(
+        title,
+        style: const TextStyle(color: Colors.white),
       ),
-    ),
-  );
-}
+      subtitle: TextField(
+        controller: controller,
+        style: const TextStyle(color: Colors.white),
+        decoration: const InputDecoration(
+          border: OutlineInputBorder(),
+          isDense: true,
+        ),
+        onChanged: onChange,
+      ),
+    );
+  }
+
 
   // ignore: unused_element
   Widget _toggleTile({
@@ -335,32 +188,35 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
   }
 
   // ignore: unused_element
-  Widget _dropdownTile({
+  Widget _dropdownTile<T>({
     required String title,
-    required String value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
+    required T value,
+    required List<T> items,
+    required ValueChanged<T?> onChanged,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: const TextStyle(color: Colors.white)),
-          DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: value,
-              dropdownColor: const Color(0xFF2A2A2A),
-              iconEnabledColor: Colors.white,
-              style: const TextStyle(color: Colors.white),
-              onChanged: onChanged,
-              items: items.map((item) {
-                return DropdownMenuItem(
-                  value: item,
-                  child: Text(item),
-                );
-              }).toList(),
+          const SizedBox(height: 6),
+          DropdownButtonFormField<T>(
+            initialValue: value,
+            dropdownColor: const Color(0xFF2A2A2A),
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              isDense: true,
             ),
+            iconEnabledColor: Colors.white,
+            onChanged: onChanged,
+            items: items.map((item) {
+              return DropdownMenuItem<T>(
+                value: item,
+                child: Text(item.toString()),
+              );
+            }).toList(),
           ),
         ],
       ),

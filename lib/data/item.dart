@@ -3,14 +3,17 @@ import 'package:icons_management_system/tools/date_from.dart';
 class Item {
   String name;
   DateTime? time;
+  String? staffName;
   
   Item(this.name);
 
   String getName() => name;
 
-  Item withTimestamp({DateTime? time}) {
+  Item withInfo({required String staff, DateTime? time}) {
     time ??= DateTime.now();
     this.time = time;
+
+    staffName = staff;
 
     return this;
   }
@@ -23,7 +26,7 @@ class Item {
     try {
       return Item(
         data['item'],
-      ).withTimestamp(time: TimeHelper.fromString(data['time']));
+      ).withInfo(staff: data['staff'] ?? "No Staff", time: TimeHelper.fromString(data['time']));
     } catch (e) {
       print("Unable to parse data...");
       print(data);
@@ -35,7 +38,8 @@ class Item {
 
   Map<String, dynamic> toJSON(bool isPlayer) => {
     "item": name,
-    "time": TimeHelper.shorten(time ?? DateTime.now())
+    "time": TimeHelper.shorten(time ?? DateTime.now()),
+    "staff": staffName
   };
 
   @override

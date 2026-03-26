@@ -6,6 +6,7 @@ import 'package:icons_management_system/data/firebase_handler.dart';
 import 'package:icons_management_system/data/inventory_manager.dart';
 import 'package:icons_management_system/data/user.dart';
 import 'package:icons_management_system/screens/base_screen.dart';
+import 'package:icons_management_system/tools/string_helper.dart';
 
 class TakeoutScreen extends BaseScreen {
   const TakeoutScreen({super.key});
@@ -59,6 +60,24 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
         'Please enter student ID.',
       );
       return (null, EntryError.missingInfo());
+    }
+
+    bool pass = switch (InventoryManager.studentIDType) {
+      StudentID.ALPHA => StringHelper.isAlpha(studentNumber),
+      StudentID.NUMERIC => StringHelper.isNumeric(studentNumber),
+      StudentID.ALPHA_NUMERIC => StringHelper.isAlphaNumeric(studentNumber),
+    };
+
+    if (!pass) {
+      return (null, EntryError.incorrectInfo());
+    }
+
+    int len = studentNumber.length;
+
+    pass = len >= InventoryManager.minLength && len <= InventoryManager.maxLength;
+
+    if (!pass) {
+      return (null, EntryError.incorrectInfo());
     }
 
     if (!InventoryManager.isRegistered(studentNumber)) {
@@ -217,7 +236,7 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                'iCons Database',
+                'iCons Inventory System',
                 style: TextStyle(
                   color: BaseScreenState.primaryTextColor,
                   fontSize: 36,
@@ -337,6 +356,15 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
                   var (user, result) = submitPressed();
 
                   if (user == null) {
+                    if (result == EntryError.incorrectInfo()) {
+                      showErrorDialog(
+                        context,
+                        "Student ID Mismatch",
+                        "User with id ${studentIdController.text.trim()} doesn't match config"
+                      );
+
+                      return;
+                    }
                     if (result != EntryError.notRegistered()) {
                       showErrorDialog(
                         context,
