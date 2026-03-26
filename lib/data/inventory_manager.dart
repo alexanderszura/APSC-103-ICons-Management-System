@@ -5,6 +5,19 @@ import 'package:icons_management_system/tools/entry_error.dart';
 import 'package:icons_management_system/data/item.dart';
 import 'package:icons_management_system/data/user.dart';
 
+enum StudentID {
+    ALPHA("Alpha"),
+    NUMERIC("Numeric"),
+    ALPHA_NUMERIC("Alpha-Numeric");
+
+    final String text;
+
+    const StudentID(this.text);
+
+    @override
+    String toString() => text;
+}
+
 abstract class InventoryManager {
 
   static HashMap<User, List<Item>> inventory = HashMap();
@@ -12,7 +25,20 @@ abstract class InventoryManager {
 
   static List<InventoryItem> items = [];
 
-  static Future<void> init() async => items = await FirebaseHandler.loadInventory();
+  static StudentID studentIDType = StudentID.NUMERIC;
+  static late int minLength;
+  static late int maxLength;
+
+  static Future<void> init() async {
+    items = await FirebaseHandler.loadInventory();
+
+    int min, max;
+
+    (min, max) = await FirebaseHandler.getIDBounds();
+
+    minLength = min;
+    maxLength = max;
+  }
 
   static List<InventoryItem> getInventory() => items; 
 

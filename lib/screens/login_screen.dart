@@ -112,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              'iCons Database',
+              'iCons Inventory System',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 48,

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:firebase_database/firebase_database.dart';
 import 'package:icons_management_system/data/inventory_item.dart';
+import 'package:icons_management_system/data/inventory_manager.dart';
 import 'package:icons_management_system/data/user.dart';
 import 'package:flutter/foundation.dart' as foundation;
 
@@ -12,6 +13,8 @@ abstract class FirebaseHandler {
   static final db = FirebaseDatabase.instance.ref(
     foundation.kDebugMode ? "development" : "production"
   );
+
+  static String? userName;
 
   static Future<bool> pushItem(InventoryItem item) async {
     try {
@@ -43,6 +46,8 @@ abstract class FirebaseHandler {
       });
 
       final userCredential = await FirebaseAuth.instance.signInWithPopup(microsoftProvider);
+
+      userName = userCredential.user?.displayName;
 
       return userCredential.user != null;
     } catch (e) {
@@ -164,6 +169,80 @@ abstract class FirebaseHandler {
     } catch (e) {
       print("Strike Error: $e");
       return false;
+    }
+  }
+
+  static Future<bool> setStudentIdType(StudentID type) async {
+    try {
+      final studentIdTypeRef = db.child("settings/student_id_type");
+
+      await studentIdTypeRef.set(type.toString());
+
+      return true;
+    } catch (e) {
+      print("Student Id Type Error: $e");
+      return false;
+    }
+  }
+
+  static Future<StudentID> getStudentIdType() async {
+    try {
+      final studentIdTypeRef = db.child("settings/student_id_type");
+
+      final event = await studentIdTypeRef.once(DatabaseEventType.value);
+
+      final snapshot = event.snapshot;
+
+      if (!snapshot.exists) {
+        await setStudentIdType(StudentID.NUMERIC);
+        return StudentID.NUMERIC;
+      }
+
+      return StudentID.values.byName(snapshot.value as String);
+    } catch (e) {
+      print("Student ID Parse Error: $e");
+      return StudentID.NUMERIC;
+    }
+  }
+
+  static Future<bool> setIDBounds(int? min, int? max) async {
+    try {
+      final boundsRef = db.child("settings/bounds");
+
+      if (min != null) {
+        await boundsRef.child("min").set(min);
+      }
+      
+      if (max != null) {
+        await boundsRef.child("max").set(min);
+      }
+
+      return true;
+    } catch (e) {
+      print("Student Id set Bounds Error: $e");
+      return false;
+    }
+  }
+
+  static Future<(int, int)> getIDBounds() async {
+    try {
+      final boundsRef = db.child("settings/bounds");
+
+      final minEvent = await boundsRef.child("min").once(DatabaseEventType.value);
+      final maxEvent = await boundsRef.child("max").once(DatabaseEventType.value);
+
+      if (!minEvent.snapshot.exists) {
+        await setIDBounds(8, 8);
+        return (8, 8);
+      }
+
+      int min = minEvent.snapshot.value as int;
+      int max = maxEvent.snapshot.value as int;
+
+      return (min, max);
+    } catch (e) {
+      print("Student ID Bounds Error: $e");
+      return (8, 8);
     }
   }
 }
