@@ -4,6 +4,7 @@ import 'package:icons_management_system/data/inventory_item.dart';
 import 'package:icons_management_system/tools/entry_error.dart';
 import 'package:icons_management_system/data/item.dart';
 import 'package:icons_management_system/data/user.dart';
+import 'package:icons_management_system/data/inventory_transaction.dart';
 
 enum StudentID {
     ALPHA("Alpha"),
@@ -19,6 +20,7 @@ enum StudentID {
 }
 
 abstract class InventoryManager {
+  static List<InventoryTransaction> transactions = [];
 
   static HashMap<User, List<Item>> inventory = HashMap();
   static HashMap<String, User>     users     = HashMap();
@@ -79,6 +81,30 @@ abstract class InventoryManager {
 
     return user;
   }
+
+  static void recordCheckout(User user, InventoryItem item, DateTime time) {
+  transactions.add(
+    InventoryTransaction(
+      type: "checkout",
+      itemName: item.name,
+      studentId: user.studentNumber,
+      userName: user.name,
+      timestamp: time,
+    ),
+  );
+}
+
+static void recordReturn(User user, Item item, DateTime time) {
+  transactions.add(
+    InventoryTransaction(
+      type: "return",
+      itemName: item.name,
+      studentId: user.studentNumber,
+      userName: user.name,
+      timestamp: time,
+    ),
+  );
+}
   
   static EntryError? addEntry(User user, List<InventoryItem> items, {bool force = false}) {
     if (!force) {
@@ -98,6 +124,7 @@ abstract class InventoryManager {
     DateTime now = DateTime.now();
     for (InventoryItem item in items) {
       inventory[user]?.add(item.userItem().withInfo(staff: FirebaseHandler.userName ?? "No Staff", time: now));
+      recordCheckout(user, item, now);
     }
 
     return null;
@@ -107,7 +134,10 @@ abstract class InventoryManager {
 
   static List<Item> getUserItems(User user) => inventory[user] ?? [];
 
-  static void removeItemFromUser(User user, Item item) => inventory[user]?.remove(item);
+  static void removeItemFromUser(User user, Item item) {
+    inventory[user]?.remove(item);
+    recordReturn(user, item, DateTime.now());
+  }
   static void removeUserItemData(User user) => inventory.remove(user);
 
   static User? getUser(String studentNumber) => users[studentNumber];
@@ -132,7 +162,14 @@ abstract class InventoryManager {
       };
     });
 
+    final Map<String, dynamic> transactionMap = {};
+    for (int i = 0; i< transactions.length; i++){
+      transactionMap["tx_$i"]= transactions[i].toJSON();
+    }
+
+
     map['items_out'] = itemsOutMap;
+    map['transactions'] = transactionMap;
 
     return map;
   }
@@ -167,11 +204,11 @@ abstract class InventoryManager {
   }
 
   static void loadJSON(Map<String, dynamic> data) {
-    if (!data.containsKey("items_out") || data["items_out"] == null) {
-      return;
-    }
+    inventory.clear();
+    transactions.clear();
 
-    try {
+    if (data.containsKey("items_out") && data["items_out"] != null){
+      try {
       final itemsOut = Map<String, dynamic>.from(data["items_out"]);
 
       for (final entry in itemsOut.entries) {
@@ -184,27 +221,40 @@ abstract class InventoryManager {
           final itemsMap = Map<String, dynamic>.from(entryData["items"]);
 
           for (final itemEntry in itemsMap.entries) {
-            final itemData = Map<String, dynamic>.from(itemEntry.value);
+            final parsed = Item.fromJSON(Map<String, dynamic>.from(itemEntry.value),);
+            
 
-            Item? item = Item.fromJSON(itemData);
-
-            if (item != null) {
-              items.add(item);
+            if (parsed != null) {
+              items.add(parsed);
             }
           }
         }
 
-        User? user = getUser(studentId);
-
-        if (user != null) {
-          inventory[user] = items;
-        } else {
-          print("Couldn't find user $studentId for items: $items");
+        final user = getUser(studentId);
+        if(user !=null){
+          inventory[user]= items;
         }
       }
     } catch (e) {
-      print("Error loading JSON data: $e");
-      print("Data: $data");
+      print("Unable to parse items_out...");
+      print(e);
     }
   }
+
+  if (data.containsKey("transactions") && data[transactions] !=null){
+    try{
+      final txMap = Map<String, dynamic>.from(data["transactions"]);
+      
+      for (final entry in txMap.entries){
+        final parsed = InventoryTransaction.fromJSON(Map<String, dynamic>.from(entry.value),);
+        if (parsed !=null){
+          transactions.add(parsed);
+        }
+      }
+    } catch (e){
+      print("Unable to parse transactions...");
+      print(e);
+    }
+  }
+}
 }

@@ -46,7 +46,8 @@ abstract class FirebaseHandler {
       });
 
       final userCredential = await FirebaseAuth.instance.signInWithPopup(microsoftProvider);
-
+      print(FirebaseAuth.instance.currentUser?.uid);
+      print(FirebaseAuth.instance.currentUser?.email);
       return userCredential.user != null;
     } catch (e) {
       print("Sign-In Error: $e");
@@ -128,13 +129,14 @@ abstract class FirebaseHandler {
   }
 
   static Future<Map<String, dynamic>> getSessionData() async {
-    final event = await db.child("items_out").once(DatabaseEventType.value);
+    final itemsOutEvent = await db.child("items_out").once(DatabaseEventType.value);
+    final transactionsEvent = await db.child("transactions").once(DatabaseEventType.value);
 
-    var data = {
-      "items_out": event.snapshot.value
+
+    return {
+      "items_out": itemsOutEvent.snapshot.value,
+      "transactions": transactionsEvent.snapshot.value,
     };
-
-    return data;
   }
 
   static Future<bool> sync(Map<String, dynamic> data) async {

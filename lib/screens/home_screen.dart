@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:icons_management_system/screens/base_screen.dart';
 import 'package:icons_management_system/screens/takeout_screen.dart';
 import 'package:icons_management_system/screens/search_screen.dart';
+import 'package:icons_management_system/screens/analytics_screen.dart';
 
 class HomeScreen extends BaseScreen {
   const HomeScreen({super.key});
@@ -89,6 +90,29 @@ class HomeScreenState extends BaseScreenState<HomeScreen> {
               style: TextStyle(color: Colors.white, fontSize: 20),
             ),
           ),
+          const SizedBox(height: 30),
+
+          // Analytics Button
+          OutlinedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AnalyticsScreen()),
+              );
+            },
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Colors.white, width: 2),
+              shape: const StadiumBorder(),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 60,
+                vertical: 20,
+              ),
+            ),
+            child: const Text(
+              'Analytics',
+              style: TextStyle(color: Colors.white, fontSize: 20),
+            ),
+          )
         ],
       ),
     );
