@@ -140,8 +140,7 @@ static void recordReturn(User user, Item item, DateTime time) {
     recordReturn(user, item, DateTime.now());
   }
 
-  // static void removeItemFromUser(User user, Item item) => inventory[user]?.remove(item);
-  // static void removeUserItemData(User user) => inventory.remove(user);
+  static void removeUserItemData(User user) => inventory.remove(user);
 
   static User? getUser(String studentNumber) => users[studentNumber];
 
