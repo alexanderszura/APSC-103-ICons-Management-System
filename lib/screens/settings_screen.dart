@@ -12,13 +12,17 @@ class SettingsScreen extends BaseScreen {
 
 class SettingsScreenState extends BaseScreenState<SettingsScreen> {
 
-  TextEditingController minLengthController = TextEditingController(
+  final TextEditingController minLengthController = TextEditingController(
     text: InventoryManager.minLength.toString()
   );
 
-  TextEditingController maxLengthController = TextEditingController(
+  final TextEditingController maxLengthController = TextEditingController(
     text: InventoryManager.maxLength.toString()
   );
+
+  final TextEditingController _emailController = TextEditingController();
+  List<String> _allowedEmailKeys = [];
+  bool _emailsLoading = true;
 
   static void navigate(BuildContext context) {
     Navigator.pop(context); // Close drawer
@@ -29,9 +33,24 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _loadAllowedEmails();
+  }
+
+  Future<void> _loadAllowedEmails() async {
+    final keys = await FirebaseHandler.getAllowedEmailKeys();
+    setState(() {
+      _allowedEmailKeys = keys;
+      _emailsLoading = false;
+    });
+  }
+
+  @override
   void dispose() {
     minLengthController.dispose();
     maxLengthController.dispose();
+    _emailController.dispose();
 
     super.dispose();
   }
@@ -55,6 +74,7 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _sectionTitle("Student ID"),
             _settingsCard(
@@ -104,7 +124,118 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
                   }
                 )
               ]
-            )
+            ),
+
+            const SizedBox(height: 28),
+
+            _sectionTitle("Website Access"),
+            SizedBox(
+              width: double.infinity,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2A2A2A),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Grant access by email",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _emailController,
+                            style: const TextStyle(color: Colors.white),
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: const InputDecoration(
+                              hintText: 'user@example.com',
+                              hintStyle: TextStyle(color: Colors.white38),
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        OutlinedButton(
+                          onPressed: () async {
+                            final email = _emailController.text.trim();
+                            if (email.isEmpty || !email.contains('@')) return;
+
+                            final success = await FirebaseHandler.addAllowedEmail(email);
+
+                            if (success) {
+                              _emailController.clear();
+                              await _loadAllowedEmails();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Access granted to $email'),
+                                    backgroundColor: Colors.green.shade700,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.white54),
+                            shape: const StadiumBorder(),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                          ),
+                          child: const Text('Add', style: TextStyle(color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      "Allowed accounts:",
+                      style: TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                    const SizedBox(height: 6),
+                    if (_emailsLoading)
+                      const Center(child: CircularProgressIndicator(color: Colors.white38))
+                    else if (_allowedEmailKeys.isEmpty)
+                      const Text(
+                        'No emails added yet.',
+                        style: TextStyle(color: Colors.white38, fontSize: 13),
+                      )
+                    else
+                      ..._allowedEmailKeys.map((key) {
+                        // Convert key back to readable email for display
+                        final displayEmail = key.replaceAll(',', '.').replaceAll('|', '@');
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 3),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.check_circle_outline, color: Colors.greenAccent, size: 16),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  displayEmail,
+                                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent, size: 18),
+                                tooltip: 'Remove access',
+                                onPressed: () async {
+                                  await FirebaseHandler.removeAllowedEmail(displayEmail);
+                                  await _loadAllowedEmails();
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),

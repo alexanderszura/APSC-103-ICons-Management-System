@@ -243,4 +243,55 @@ abstract class FirebaseHandler {
       return (8, 8);
     }
   }
+
+  // Converts an email address to a Firebase-safe key.
+  // Replaces '.' with ',' and '@' with '|' so it can be used as a DB key.
+  static String emailToKey(String email) {
+    return email.trim().toLowerCase().replaceAll('.', ',').replaceAll('@', '|');
+  }
+
+  static Future<bool> addAllowedEmail(String email) async {
+    try {
+      final key = emailToKey(email);
+      final ref = db.child('settings/allowed_emails').child(key);
+      await ref.set(true);
+      return true;
+    } catch (e) {
+      print('Add Allowed Email Error: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> removeAllowedEmail(String email) async {
+    try {
+      final key = emailToKey(email);
+      final ref = db.child('settings/allowed_emails').child(key);
+      await ref.remove();
+      return true;
+    } catch (e) {
+      print('Remove Allowed Email Error: $e');
+      return false;
+    }
+  }
+
+  static Future<List<String>> getAllowedEmailKeys() async {
+    try {
+      final ref = db.child('settings/allowed_emails');
+      final event = await ref.once(DatabaseEventType.value);
+      if (event.snapshot.value == null) return [];
+      final map = Map<String, dynamic>.from(event.snapshot.value as Map);
+      return map.keys.toList();
+    } catch (e) {
+      print('Get Allowed Emails Error: $e');
+      return [];
+    }
+  }
+
+  static Future<bool> isCurrentUserEmailAllowed() async {
+    final currentEmail = FirebaseAuth.instance.currentUser?.email;
+    if (currentEmail == null) return false;
+    final key = emailToKey(currentEmail);
+    final allowedKeys = await getAllowedEmailKeys();
+    return allowedKeys.contains(key);
+  }
 }
