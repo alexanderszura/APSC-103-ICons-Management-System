@@ -243,7 +243,7 @@ static void recordReturn(User user, Item item, DateTime time) {
     }
   }
 
-  if (data.containsKey("transactions") && data[transactions] !=null){
+  if (data.containsKey("transactions") && data["transactions"] != null){
     try{
       final txMap = Map<String, dynamic>.from(data["transactions"]);
       
