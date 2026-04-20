@@ -33,6 +33,13 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
+      final isAllowed = await FirebaseHandler.isCurrentUserEmailAllowed();
+      if (isAllowed) {
+        if (!await FirebaseHandler.addUidRemoveEmail(FirebaseAuth.instance.currentUser!.uid)) {
+          print("Error converting email");
+        }
+      }
+
       try {
         await User.loadBans();
       } on FirebaseException catch (e) {

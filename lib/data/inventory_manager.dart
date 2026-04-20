@@ -20,6 +20,7 @@ enum StudentID {
 }
 
 abstract class InventoryManager {
+  
   static List<InventoryTransaction> transactions = [];
 
   static HashMap<User, List<Item>> inventory = HashMap();
@@ -138,7 +139,9 @@ static void recordReturn(User user, Item item, DateTime time) {
     inventory[user]?.remove(item);
     recordReturn(user, item, DateTime.now());
   }
-  static void removeUserItemData(User user) => inventory.remove(user);
+
+  // static void removeItemFromUser(User user, Item item) => inventory[user]?.remove(item);
+  // static void removeUserItemData(User user) => inventory.remove(user);
 
   static User? getUser(String studentNumber) => users[studentNumber];
 

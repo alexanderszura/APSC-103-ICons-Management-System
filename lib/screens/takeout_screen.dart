@@ -17,11 +17,13 @@ class TakeoutScreen extends BaseScreen {
 
 class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
   
-  final TextEditingController nameController      = TextEditingController();
-  final TextEditingController studentIdController = TextEditingController();
-  final TextEditingController emailController     = TextEditingController();
+  final TextEditingController nameController       = TextEditingController();
+  final TextEditingController studentIdController  = TextEditingController();
+  final TextEditingController emailController      = TextEditingController();
 
-  final TextEditingController itemController      = TextEditingController();
+  final TextEditingController itemController       = TextEditingController();
+
+  final TextEditingController itemSearchController = TextEditingController();
 
   List<InventoryItem> itemOptions = InventoryManager.getInventory();
   Set<InventoryItem> selectedItems = {};
@@ -109,6 +111,7 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
     emailController.dispose();
     studentIdController.dispose();
     itemController.dispose();
+    itemSearchController.dispose();
 
     super.dispose();
   }
@@ -307,9 +310,11 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
                                 menuSetState(() {});
                               },
                               child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Checkbox(
                                     value: isSelected,
+                                    visualDensity: VisualDensity.compact,
                                     onChanged: (checked) {
                                       setState(() {
                                         if (checked == true) {
@@ -347,9 +352,45 @@ class TakeoutScreenState extends BaseScreenState<TakeoutScreen> {
                     ),
 
                     onChanged: (_) {},
+
+                    dropdownSearchData: DropdownSearchData(
+                      searchController: itemSearchController,
+                      searchBarWidgetHeight: 50,
+                      searchBarWidget: Container(
+                        height: 50,
+                        padding: const EdgeInsets.all(8),
+                        child: TextField(
+                          controller: itemSearchController,
+                          style: const TextStyle(
+                            color: BaseScreenState.primaryTextColor,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: "Search Items...",
+                            isDense: true,
+                            contentPadding: EdgeInsets.all(12),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8)
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: const BorderSide(
+                                color: Color.fromARGB(255, 204, 204, 204),
+                                width: 1.5,
+                              ),
+                            ),
+
+                          ),
+                        ),
+                      ),
+                      searchMatchFn: (item, searchValue) =>
+                        item.value!.name
+                          .toLowerCase()
+                          .contains(searchValue.toLowerCase())
+                    ),
                   ),
                 ),
               ),
+
               const SizedBox(height: 40),
               OutlinedButton(
                 onPressed: () async {
