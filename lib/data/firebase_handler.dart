@@ -10,7 +10,9 @@ abstract class FirebaseHandler {
 
   FirebaseHandler._();
 
-  static final db = FirebaseDatabase.instance.ref(
+  static final instance = FirebaseDatabase.instance;
+
+  static final db = instance.ref(
     foundation.kDebugMode ? "development" : "production"
   );
 
@@ -253,7 +255,7 @@ abstract class FirebaseHandler {
   static Future<bool> addAllowedEmail(String email) async {
     try {
       final key = emailToKey(email);
-      final ref = db.child('settings/allowed_emails').child(key);
+      final ref = instance.ref('allowed_emails').child(key);
       await ref.set(true);
       return true;
     } catch (e) {
@@ -265,7 +267,7 @@ abstract class FirebaseHandler {
   static Future<bool> removeAllowedEmail(String email) async {
     try {
       final key = emailToKey(email);
-      final ref = db.child('settings/allowed_emails').child(key);
+      final ref = instance.ref('allowed_emails').child(key);
       await ref.remove();
       return true;
     } catch (e) {
@@ -276,7 +278,7 @@ abstract class FirebaseHandler {
 
   static Future<List<String>> getAllowedEmailKeys() async {
     try {
-      final ref = db.child('settings/allowed_emails');
+      final ref = instance.ref('allowed_emails');
       final event = await ref.once(DatabaseEventType.value);
       if (event.snapshot.value == null) return [];
       final map = Map<String, dynamic>.from(event.snapshot.value as Map);
@@ -293,5 +295,101 @@ abstract class FirebaseHandler {
     final key = emailToKey(currentEmail);
     final allowedKeys = await getAllowedEmailKeys();
     return allowedKeys.contains(key);
+  }
+
+  static Future<bool> addUidRemoveEmail(String uid) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null || user.email == null) return false;
+
+      final emailKey = emailToKey(user.email!);
+
+      final allowedRef = instance.ref('allowed_emails').child(emailKey);
+
+      final snapshot = await allowedRef.get();
+      if (!snapshot.exists) {
+        print('Email not allowed');
+        return false;
+      }
+
+      await instance.ref().update({
+        'staff/$uid': true,
+        'allowed_emails/$emailKey': null,
+      });
+
+
+      return true;
+    } catch (e) {
+      print('Error Adding UID + Removing Email: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> updateUser({
+    required String oldStudentNumber,
+    required String newStudentNumber,
+    required String newName,
+    required String newEmail,
+    required int strikes,
+  }) async {
+    try {
+      final bool numberChanged = oldStudentNumber != newStudentNumber;
+
+      final Map<String, dynamic> userData = {
+        'name': newName,
+        'student_id': newStudentNumber,
+        'email': newEmail,
+        'strikes': strikes,
+      };
+
+      if (numberChanged) {
+        // Write under new key
+        await db.child('users').child(newStudentNumber).set(userData);
+        // Delete old key
+        await db.child('users').child(oldStudentNumber).remove();
+
+        final bannedSnap = await db.child('banned_ids').child(oldStudentNumber).once(DatabaseEventType.value);
+        if (bannedSnap.snapshot.exists) {
+          await db.child('banned_ids').child(newStudentNumber).set(true);
+          await db.child('banned_ids').child(oldStudentNumber).remove();
+        }
+
+        final itemsSnap = await db.child('items_out').child(oldStudentNumber).once(DatabaseEventType.value);
+        if (itemsSnap.snapshot.exists) {
+          await db.child('items_out').child(newStudentNumber).set(itemsSnap.snapshot.value);
+          await db.child('items_out').child(oldStudentNumber).remove();
+        }
+      } else {
+        await db.child('users').child(oldStudentNumber).update(userData);
+      }
+
+      return true;
+    } catch (e) {
+      print('Update User Error: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> deleteUser(String studentNumber) async {
+    try {
+      await db.child('users').child(studentNumber).remove();
+      await db.child('banned_ids').child(studentNumber).remove();
+      return true;
+    } catch (e) {
+      print('Delete User Error: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> yearReset() async {
+    try {
+      await db.child('users').remove();
+      await db.child('banned_ids').remove();
+      await db.child('items_out').remove();
+      return true;
+    } catch (e) {
+      print('Year Reset Error: $e');
+      return false;
+    }
   }
 }

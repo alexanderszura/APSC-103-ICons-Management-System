@@ -34,13 +34,10 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       final isAllowed = await FirebaseHandler.isCurrentUserEmailAllowed();
-      if (!isAllowed) {
-        await FirebaseHandler.logout();
-        if (mounted) {
-          setState(() { _isLoading = false; });
-          _showErrorDialog('Access denied. Your account has not been granted access to this site. Please contact an administrator.');
+      if (isAllowed) {
+        if (!await FirebaseHandler.addUidRemoveEmail(FirebaseAuth.instance.currentUser!.uid)) {
+          print("Error converting email");
         }
-        return;
       }
 
       try {

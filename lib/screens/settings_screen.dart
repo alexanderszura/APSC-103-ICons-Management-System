@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:icons_management_system/data/firebase_handler.dart';
 import 'package:icons_management_system/data/inventory_manager.dart';
 import 'package:icons_management_system/screens/base_screen.dart';
+import 'package:icons_management_system/data/user.dart';
 
 class SettingsScreen extends BaseScreen {
   const SettingsScreen({super.key});
@@ -232,6 +233,105 @@ class SettingsScreenState extends BaseScreenState<SettingsScreen> {
                           ),
                         );
                       }),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 28),
+
+            _sectionTitle("Danger Zone"),
+            SizedBox(
+              width: double.infinity,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2A2A2A),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.redAccent.withAlpha(120)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.refresh, color: Colors.redAccent, size: 28),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Year-End Reset',
+                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Deletes all user accounts and items out. Inventory and settings are kept.',
+                            style: TextStyle(color: Colors.white54, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    OutlinedButton(
+                      onPressed: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            backgroundColor: const Color(0xFF2A2A2A),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: const BorderSide(color: Colors.redAccent, width: 2),
+                            ),
+                            title: const Row(
+                              children: [
+                                Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 28),
+                                SizedBox(width: 12),
+                                Text('Year-End Reset', style: TextStyle(color: Colors.white)),
+                              ],
+                            ),
+                            content: const Text(
+                              'This will permanently delete:\n\n• All registered user accounts\n• All items currently checked out\n\nInventory items and settings will be kept.\n\nThis cannot be undone. Are you sure?',
+                              style: TextStyle(color: Colors.white70, fontSize: 15),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(false),
+                                child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(true),
+                                style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+                                child: const Text('Reset', style: TextStyle(fontSize: 15)),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirmed != true) return;
+
+                        final success = await FirebaseHandler.yearReset();
+
+                        if (!mounted) return;
+
+                        if (!success) {
+                          showErrorDialog(context, 'Reset Failed', 'Could not complete the year-end reset. Please try again.');
+                        } else {
+                          InventoryManager.users.clear();
+                          InventoryManager.inventory.clear();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Year-end reset complete.'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.redAccent),
+                        shape: const StadiumBorder(),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      ),
+                      child: const Text('Reset', style: TextStyle(color: Colors.redAccent)),
+                    ),
                   ],
                 ),
               ),
